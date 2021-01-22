@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.fms.report.server.webapp.dao.SystemCommonConfigDAO">
+
+    <select id="findMapByDomain" parameterType="SystemCommonConfigDomain" resultType="java.util.Map" useCache="true">
+        select
+        PARAM_KEY as 'key' ,PARAM_VALUE as 'value'
+        from
+        SYSTEM_COMMON_CONFIG
+        <where>
+
+            <if test="type !=null">
+                and TYPE = #{type}
+            </if>
+        </where>
+    </select>
+
+</mapper>

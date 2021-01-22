@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<fontFamilies>
+    <fontFamily name="华文宋体">
+        <normal>fonts/STSONG.TTF</normal>
+        <bold>fonts/STSONG.TTF</bold>
+        <italic>fonts/STSONG.TTF</italic>
+        <boldItalic>fonts/STSONG.TTF</boldItalic>
+        <pdfEncoding>Identity-H</pdfEncoding>
+        <pdfEmbedded>true</pdfEmbedded>
+        <exportFonts>
+            <export key="net.sf.jasperreports.html">'华文宋体', Arial, Helvetica, sans-serif</export>
+            <export key="net.sf.jasperreports.xhtml">'华文宋体', Arial, Helvetica, sans-serif</export>
+        </exportFonts>
+    </fontFamily>
+    <fontFamily name="宋体">
+        <normal>fonts/simsun001.TTF</normal>
+        <bold>fonts/simsun001.TTF</bold>
+        <italic>fonts/simsun001.TTF</italic>
+        <boldItalic>fonts/simsun001.TTF</boldItalic>
+        <pdfEncoding>Identity-H</pdfEncoding>
+        <pdfEmbedded>true</pdfEmbedded>
+        <exportFonts>
+            <export key="net.sf.jasperreports.html">'宋体', Arial, Helvetica, sans-serif</export>
+            <export key="net.sf.jasperreports.xhtml">'宋体', Arial, Helvetica, sans-serif</export>
+        </exportFonts>
+    </fontFamily>
+    <fontFamily name="微软雅黑">
+        <normal>fonts/MSYH001.TTF</normal>
+        <bold>fonts/MSYH001.TTF</bold>
+        <italic>fonts/MSYH001.TTF</italic>
+        <boldItalic>fonts/MSYH001.TTF</boldItalic>
+        <pdfEncoding>Identity-H</pdfEncoding>
+        <pdfEmbedded>true</pdfEmbedded>
+        <exportFonts>
+            <export key="net.sf.jasperreports.html">'微软雅黑', Arial, Helvetica, sans-serif</export>
+            <export key="net.sf.jasperreports.xhtml">'微软雅黑', Arial, Helvetica, sans-serif</export>
+        </exportFonts>
+    </fontFamily>
+</fontFamilies>
+        <!--<beans xmlns="http://www.springframework.org/schema/beans"-->
+        <!--xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"-->
+        <!--xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans.xsd">-->
+
+        <!--</beans>-->

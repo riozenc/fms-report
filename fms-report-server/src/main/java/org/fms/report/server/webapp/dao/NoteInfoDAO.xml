@@ -1,0 +1,316 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.fms.report.server.webapp.dao.NoteInfoDAO">
+<select id="findByKey" parameterType="NoteInfoDomain" resultType="NoteInfoDomain" useCache="true">
+select ID,CHARGE_INFO_ID,NOTE_PRINT_NO,PRINT_MAN,PRINT_DATE,MON,ADDRESS,CONNECT_BANK,BANK_NO,FACT_MONEY,THIS_BALANCE,LAST_BALANCE,LADDER_1_LIMIT,LADDER_1_POWER,LADDER_2_LIMIT,LADDER_2_POWER,LADDER_3_LIMIT,LADDER_3_POWER,LADDER_4_LIMIT,LADDER_4_POWER,PUNISH_MONEY,POWER_RATE_MONEY,BASIC_MONEY,ARREARS,SETTLEMENT_NO,SETTLEMENT_NAME,SETTLEMENT_ID,PRICE_TYPE_ID,PRICE_NAME,METER_ITEM,NOTE_FLOW_NO from NOTE_INFO<where>
+ and ID = #{id}
+
+</where>
+</select>
+<select id="findByWhere" parameterType="NoteInfoDomain" resultType="NoteInfoDomain" useCache="true">
+select ID,CHARGE_INFO_ID,NOTE_PRINT_NO,PRINT_MAN,PRINT_DATE,MON,ADDRESS,CONNECT_BANK,BANK_NO,FACT_MONEY,THIS_BALANCE,LAST_BALANCE,LADDER_1_LIMIT,LADDER_1_POWER,LADDER_2_LIMIT,LADDER_2_POWER,LADDER_3_LIMIT,LADDER_3_POWER,LADDER_4_LIMIT,LADDER_4_POWER,PUNISH_MONEY,POWER_RATE_MONEY,BASIC_MONEY,ARREARS,SETTLEMENT_NO,SETTLEMENT_NAME,SETTLEMENT_ID,PRICE_TYPE_ID,PRICE_NAME,METER_ITEM,NOTE_FLOW_NO from NOTE_INFO
+<where>
+<if test="id !=null">
+ and ID = #{id}
+</if>
+<if test="chargeInfoId !=null">
+ and CHARGE_INFO_ID = #{chargeInfoId}
+</if>
+<if test="notePrintNo !=null">
+ and NOTE_PRINT_NO = #{notePrintNo}
+</if>
+<if test="printMan !=null">
+ and PRINT_MAN = #{printMan}
+</if>
+<if test="printDate !=null">
+ and PRINT_DATE = #{printDate}
+</if>
+<if test="mon !=null">
+ and MON = #{mon}
+</if>
+<if test="address !=null">
+ and ADDRESS = #{address}
+</if>
+<if test="connectBank !=null">
+ and CONNECT_BANK = #{connectBank}
+</if>
+<if test="bankNo !=null">
+ and BANK_NO = #{bankNo}
+</if>
+<if test="factMoney !=null">
+ and FACT_MONEY = #{factMoney}
+</if>
+<if test="thisBalance !=null">
+ and THIS_BALANCE = #{thisBalance}
+</if>
+<if test="lastBalance !=null">
+ and LAST_BALANCE = #{lastBalance}
+</if>
+<if test="ladder1Limit !=null">
+ and LADDER_1_LIMIT = #{ladder1Limit}
+</if>
+<if test="ladder1Power !=null">
+ and LADDER_1_POWER = #{ladder1Power}
+</if>
+<if test="ladder2Limit !=null">
+ and LADDER_2_LIMIT = #{ladder2Limit}
+</if>
+<if test="ladder2Power !=null">
+ and LADDER_2_POWER = #{ladder2Power}
+</if>
+<if test="ladder3Limit !=null">
+ and LADDER_3_LIMIT = #{ladder3Limit}
+</if>
+<if test="ladder3Power !=null">
+ and LADDER_3_POWER = #{ladder3Power}
+</if>
+<if test="ladder4Limit !=null">
+ and LADDER_4_LIMIT = #{ladder4Limit}
+</if>
+<if test="ladder4Power !=null">
+ and LADDER_4_POWER = #{ladder4Power}
+</if>
+<if test="punishMoney !=null">
+ and PUNISH_MONEY = #{punishMoney}
+</if>
+<if test="powerRateMoney !=null">
+ and POWER_RATE_MONEY = #{powerRateMoney}
+</if>
+<if test="basicMoney !=null">
+ and BASIC_MONEY = #{basicMoney}
+</if>
+<if test="arrears !=null">
+ and ARREARS = #{arrears}
+</if>
+<if test="settlementNo !=null">
+ and SETTLEMENT_NO = #{settlementNo}
+</if>
+<if test="settlementName !=null">
+ and SETTLEMENT_NAME = #{settlementName}
+</if>
+<if test="settlementId !=null">
+ and SETTLEMENT_ID = #{settlementId}
+</if>
+<if test="priceTypeId !=null">
+ and PRICE_TYPE_ID = #{priceTypeId}
+</if>
+<if test="priceName !=null">
+ and PRICE_NAME = #{priceName}
+</if>
+<if test="meterItem !=null">
+ and METER_ITEM = #{meterItem}
+</if>
+<if test="noteFlowNo !=null">
+ and NOTE_FLOW_NO = #{noteFlowNo}
+</if>
+<if test="mon !=null">
+ and MON = #{mon}
+</if>
+<if test="groupBy !=null">
+ and GROUP_BY = #{groupBy}
+</if>
+<if test="businessPlaceCode !=null">
+ and BUSINESS_PLACE_CODE = #{businessPlaceCode}
+</if>
+<if test="writeSectionId !=null">
+ and WRITE_SECTION_ID = #{writeSectionId}
+</if>
+<if test="isAgainStat !=null">
+ and IS_AGAIN_STAT = #{isAgainStat}
+</if>
+<if test="managerId !=null">
+ and MANAGER_ID = #{managerId}
+</if>
+<if test="roleIds !=null">
+ and ROLE_IDS = #{roleIds}
+</if>
+<if test="deptIds !=null">
+ and DEPT_IDS = #{deptIds}
+</if>
+<if test="totalRow !=null">
+ and TOTAL_ROW = #{totalRow}
+</if>
+<if test="pageCurrent !=null">
+ and PAGE_CURRENT = #{pageCurrent}
+</if>
+<if test="pageSize !=null">
+ and PAGE_SIZE = #{pageSize}
+</if>
+<if test="dbName !=null">
+ and DB_NAME = #{dbName}
+</if>
+</where>
+</select>
+<insert id="insert" parameterType="NoteInfoDomain" flushCache="true">
+insert into NOTE_INFO(ID,CHARGE_INFO_ID,NOTE_PRINT_NO,PRINT_MAN,PRINT_DATE,MON,ADDRESS,CONNECT_BANK,BANK_NO,FACT_MONEY,THIS_BALANCE,LAST_BALANCE,LADDER_1_LIMIT,LADDER_1_POWER,LADDER_2_LIMIT,LADDER_2_POWER,LADDER_3_LIMIT,LADDER_3_POWER,LADDER_4_LIMIT,LADDER_4_POWER,PUNISH_MONEY,POWER_RATE_MONEY,BASIC_MONEY,ARREARS,SETTLEMENT_NO,SETTLEMENT_NAME,SETTLEMENT_ID,PRICE_TYPE_ID,PRICE_NAME,METER_ITEM,NOTE_FLOW_NO) values (#{id},#{chargeInfoId},#{notePrintNo},#{printMan},#{printDate},#{mon},#{address},#{connectBank},#{bankNo},#{factMoney},#{thisBalance},#{lastBalance},#{ladder1Limit},#{ladder1Power},#{ladder2Limit},#{ladder2Power},#{ladder3Limit},#{ladder3Power},#{ladder4Limit},#{ladder4Power},#{punishMoney},#{powerRateMoney},#{basicMoney},#{arrears},#{settlementNo},#{settlementName},#{settlementId},#{priceTypeId},#{priceName},#{meterItem},#{noteFlowNo})
+</insert>
+<update id="update" parameterType="NoteInfoDomain" flushCache="true">
+update NOTE_INFO
+<set>
+<if test="chargeInfoId !=null">
+CHARGE_INFO_ID = #{chargeInfoId},
+</if>
+<if test="notePrintNo !=null">
+NOTE_PRINT_NO = #{notePrintNo},
+</if>
+<if test="printMan !=null">
+PRINT_MAN = #{printMan},
+</if>
+<if test="printDate !=null">
+PRINT_DATE = #{printDate},
+</if>
+<if test="mon !=null">
+MON = #{mon},
+</if>
+<if test="address !=null">
+ADDRESS = #{address},
+</if>
+<if test="connectBank !=null">
+CONNECT_BANK = #{connectBank},
+</if>
+<if test="bankNo !=null">
+BANK_NO = #{bankNo},
+</if>
+<if test="factMoney !=null">
+FACT_MONEY = #{factMoney},
+</if>
+<if test="thisBalance !=null">
+THIS_BALANCE = #{thisBalance},
+</if>
+<if test="lastBalance !=null">
+LAST_BALANCE = #{lastBalance},
+</if>
+<if test="ladder1Limit !=null">
+LADDER_1_LIMIT = #{ladder1Limit},
+</if>
+<if test="ladder1Power !=null">
+LADDER_1_POWER = #{ladder1Power},
+</if>
+<if test="ladder2Limit !=null">
+LADDER_2_LIMIT = #{ladder2Limit},
+</if>
+<if test="ladder2Power !=null">
+LADDER_2_POWER = #{ladder2Power},
+</if>
+<if test="ladder3Limit !=null">
+LADDER_3_LIMIT = #{ladder3Limit},
+</if>
+<if test="ladder3Power !=null">
+LADDER_3_POWER = #{ladder3Power},
+</if>
+<if test="ladder4Limit !=null">
+LADDER_4_LIMIT = #{ladder4Limit},
+</if>
+<if test="ladder4Power !=null">
+LADDER_4_POWER = #{ladder4Power},
+</if>
+<if test="punishMoney !=null">
+PUNISH_MONEY = #{punishMoney},
+</if>
+<if test="powerRateMoney !=null">
+POWER_RATE_MONEY = #{powerRateMoney},
+</if>
+<if test="basicMoney !=null">
+BASIC_MONEY = #{basicMoney},
+</if>
+<if test="arrears !=null">
+ARREARS = #{arrears},
+</if>
+<if test="settlementNo !=null">
+SETTLEMENT_NO = #{settlementNo},
+</if>
+<if test="settlementName !=null">
+SETTLEMENT_NAME = #{settlementName},
+</if>
+<if test="settlementId !=null">
+SETTLEMENT_ID = #{settlementId},
+</if>
+<if test="priceTypeId !=null">
+PRICE_TYPE_ID = #{priceTypeId},
+</if>
+<if test="priceName !=null">
+PRICE_NAME = #{priceName},
+</if>
+<if test="meterItem !=null">
+METER_ITEM = #{meterItem},
+</if>
+<if test="noteFlowNo !=null">
+NOTE_FLOW_NO = #{noteFlowNo},
+</if>
+<if test="mon !=null">
+MON = #{mon},
+</if>
+<if test="groupBy !=null">
+GROUP_BY = #{groupBy},
+</if>
+<if test="businessPlaceCode !=null">
+BUSINESS_PLACE_CODE = #{businessPlaceCode},
+</if>
+<if test="writeSectionId !=null">
+WRITE_SECTION_ID = #{writeSectionId},
+</if>
+<if test="isAgainStat !=null">
+IS_AGAIN_STAT = #{isAgainStat},
+</if>
+<if test="managerId !=null">
+MANAGER_ID = #{managerId},
+</if>
+<if test="roleIds !=null">
+ROLE_IDS = #{roleIds},
+</if>
+<if test="deptIds !=null">
+DEPT_IDS = #{deptIds},
+</if>
+<if test="totalRow !=null">
+TOTAL_ROW = #{totalRow},
+</if>
+<if test="pageCurrent !=null">
+PAGE_CURRENT = #{pageCurrent},
+</if>
+<if test="pageSize !=null">
+PAGE_SIZE = #{pageSize},
+</if>
+<if test="dbName !=null">
+DB_NAME = #{dbName},
+</if>
+</set>
+<where>
+ and ID = #{id}
+
+</where>
+</update>
+<delete id="delete" parameterType="NoteInfoDomain" flushCache="true">
+delete from NOTE_INFO
+<where>
+ and ID = #{id}
+
+</where>
+</delete>
+
+ <select id="getMonBalance" parameterType="NoteInfoDomain" resultType="NoteInfoDomain" flushCache="true">
+SELECT n.SETTLEMENT_NO,n.SETTLEMENT_NAME,IFNULL(n.BANK_NO,'')as BANK_NO,n.LAST_BALANCE
+FROM NOTE_INFO n left join CHARGE_INFO c on n.CHARGE_INFO_ID=c.ID
+  <where>
+ n.MON=#{mon}
+   <if test="deptParamList != null and deptParamList.size > 0">
+    and c.BUSINESS_PLACE_CODE in
+    <foreach item="item" index="index" collection="deptParamList" open="("
+             separator="," close=")">
+     #{item}
+    </foreach>
+   </if>
+
+   <if test="settParamList != null and settParamList.size > 0">
+    and c.SETTLEMENT_ID in
+    <foreach item="item" index="index" collection="settParamList" open="("
+             separator="," close=")">
+     #{item}
+    </foreach>
+   </if>
+
+and n.ID in(select MAX(ID) from NOTE_INFO m GROUP BY m.SETTLEMENT_NO)
+  </where>
+;
+
+ </select>
+</mapper>

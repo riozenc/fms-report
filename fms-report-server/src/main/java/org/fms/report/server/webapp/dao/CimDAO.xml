@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.fms.report.server.webapp.dao.CimDAO">
+
+    <select id="getParamSettlementList" parameterType="ParamDomain" resultType="Long" useCache="true">
+        SELECT r.SETTLEMENT_ID
+        FROM METER_INFO m left join SETTLEMENT_METER_REL r on m.id=r.METER_ID
+        <where>
+            <if test="writeSectionId !=null">
+                m.WRITE_SECTION_ID=#{writeSectionId};
+            </if>
+        </where>
+
+
+    </select>
+
+</mapper>

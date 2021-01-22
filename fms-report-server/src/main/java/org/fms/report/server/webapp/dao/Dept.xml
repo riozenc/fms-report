@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.fms.report.server.webapp.dao.DeptDAO">
+    <select id="findByKey" parameterType="DeptDomain" resultType="DeptDomain" useCache="true">
+        select
+        ID,DEPT_NAME,DEPT_TYPE
+        from
+        DEPT_INFO
+        <where>
+            and ID = #{id}
+        </where>
+    </select>
+    <select id="findByParentId" parameterType="DeptDomain" resultType="DeptDomain" useCache="true">
+        select
+        ID,DEPT_NAME,DEPT_TYPE
+        from
+        DEPT_INFO
+        <where>
+            and PARENT_ID = #{parentId}
+        </where>
+    </select>
+
+    <select id="findByParentIdList" parameterType="java.util.List" resultType="DeptDomain" useCache="true">
+        select
+        ID,DEPT_NAME,DEPT_TYPE
+        from
+        DEPT_INFO
+        <where>
+            <if test="list != null and list.size > 0">
+            and PARENT_ID in
+            <foreach item="item" index="index" collection="list" open="("
+                     separator="," close=")">
+                #{item}
+            </foreach>
+            </if>
+        </where>
+    </select>
+
+    <select id="findIdMapByDomain" parameterType="DeptDomain" resultType="MapEntity" useCache="true">
+        select
+        ID as 'key' ,DEPT_NAME as 'value'
+        from
+        DEPT_INFO
+        <where>
+            <if test="id !=null">
+                and ID = #{id}
+            </if>
+        </where>
+    </select>
+    <select id="findDeptIdMapByDomain" parameterType="DeptDomain" resultType="java.util.Map" useCache="true">
+        select
+        DEPT_ID as 'key' ,DEPT_NAME as 'value'
+        from
+        DEPT_INFO
+        <where>
+            <if test="id !=null">
+                and ID = #{id}
+            </if>
+        </where>
+    </select>
+
+    <select id="getParamDeptList" parameterType="ParamDomain" resultType="Long" useCache="true">
+        select
+        ID
+        from
+        DEPT_INFO
+        <where>
+            <if test="businessPlaceCode !=null">
+                and DEPT_ID LIKE CONCAT(#{businessPlaceCode},'%')
+            </if>
+        </where>
+    </select>
+
+
+
+</mapper>

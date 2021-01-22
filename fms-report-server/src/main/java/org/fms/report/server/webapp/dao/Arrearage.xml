@@ -1,0 +1,85 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="org.fms.report.server.webapp.dao.ArrearageDAO">
+    <select id="findByWhere" resultType="ArrearageDomain"  parameterType="ArrearageDomain" useCache="true">
+        select
+        ID,ARREARAGE_NO,METER_ID,MON,SN,METER_MONEY_ID,END_DATE,TOTAL_POWER,RECEIVABLE,
+        IS_SETTLE,OWE_MONEY,PUNISH_MONEY,WRITE_SECT_ID,WRITOR_ID,BUSINESS_PLACE_CODE,
+        CREATE_DATE,OPERATOR,STATUS,SETTLEMENT_ID
+        from ARREARAGE_INFO
+        <where>
+            <choose>
+                <when test="mons != null and mons.size > 0">
+                    and MON in
+                    <foreach item="item" index="index" collection="mons" open="("
+                             separator="," close=")">
+                        #{item}
+                    </foreach>
+                </when>
+                <otherwise>
+                    <if test="mon !=null">
+                        and MON = #{mon}
+                    </if>
+                </otherwise>
+            </choose>
+            <choose>
+                <when test="writorIds != null and writorIds.size > 0">
+                    and WRITOR_ID in
+                    <foreach item="item" index="index" collection="writorIds" open="("
+                             separator="," close=")">
+                        #{item}
+                    </foreach>
+                </when>
+                <otherwise>
+                    <if test="writorId !=null">
+                        and WRITOR_ID = #{writorId}
+                    </if>
+                </otherwise>
+            </choose>
+            <choose>
+                <when test="businessPlaceCodes != null and businessPlaceCodes.size > 0">
+                    and BUSINESS_PLACE_CODE in
+                    <foreach item="item" index="index" collection="businessPlaceCodes" open="("
+                             separator="," close=")">
+                        #{item}
+                    </foreach>
+                </when>
+                <otherwise>
+                    <if test="businessPlaceCode !=null">
+                        and BUSINESS_PLACE_CODE = #{businessPlaceCode}
+                    </if>
+                </otherwise>
+            </choose>
+            <choose>
+                <when test="writeSectionIds != null and writeSectionIds.size > 0">
+                    and WRITE_SECT_ID in
+                    <foreach item="item" index="index" collection="writeSectionIds" open="("
+                             separator="," close=")">
+                        #{item}
+                    </foreach>
+                </when>
+                <otherwise>
+                    <if test="writeSectId !=null">
+                        and WRITE_SECT_ID = #{writeSectId}
+                    </if>
+                </otherwise>
+            </choose>
+            <choose>
+                <when test="meterIds != null and meterIds.size > 0">
+                    and METER_ID in
+                    <foreach item="item" index="index" collection="meterIds" open="("
+                             separator="," close=")">
+                        #{item}
+                    </foreach>
+                </when>
+                <otherwise>
+                    <if test="meterId !=null">
+                        and METER_ID = #{meterId}
+                    </if>
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+
+
+</mapper>
