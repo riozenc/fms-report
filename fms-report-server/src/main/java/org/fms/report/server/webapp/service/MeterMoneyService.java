@@ -2,6 +2,7 @@ package org.fms.report.server.webapp.service;
 
 import java.io.IOException;
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -601,6 +602,8 @@ public class MeterMoneyService {
                 bean.setBasicMoney(list.stream().filter(m -> m.getBasicMoney() != null).map(MeterMoneyDomain::getBasicMoney).reduce(BigDecimal.ZERO, BigDecimal::add));
                 bean.setShouldMoney(list.stream().filter(m -> m.getAmount() != null).map(MeterMoneyDomain::getAmount).reduce(BigDecimal.ZERO, BigDecimal::add));
                 bean.setAmount(bean.getShouldMoney());
+                //总电费 2020年11月12日14:15:56
+                bean.setTotalMoney(bean.getShouldMoney().subtract(bean.getRefundMoney()));
                 beanList.add(bean);
             } catch (JsonParseException e) {
                 e.printStackTrace();
@@ -702,6 +705,7 @@ public class MeterMoneyService {
         WriteFilesDomain paramWriteFile = new WriteFilesDomain();
         paramWriteFile.setMon(settlementDomain.getMon());
         paramWriteFile.setMeterIds(meterIds);
+        paramWriteFile.setPageSize(-1);
         List<WriteFilesDomain> writeFilesDomains =
                 billingService.findWriteFilesByMonAndMeterIds(paramWriteFile);
         if (writeFilesDomains == null || writeFilesDomains.size() < 1) {
@@ -713,6 +717,7 @@ public class MeterMoneyService {
         MeterMoneyDomain paramMeterMoney = new MeterMoneyDomain();
         paramMeterMoney.setMon(settlementDomain.getMon());
         paramMeterMoney.setMeterIds(meterIds);
+        paramMeterMoney.setPageSize(-1);
         List<MeterMoneyDomain> meterMoneyDomains =
                 billingService.findMeterMoneyByMonAndMeterIds(paramMeterMoney);
         if (meterMoneyDomains == null || meterMoneyDomains.size() < 1) {
@@ -755,7 +760,6 @@ public class MeterMoneyService {
                 new MeterMeterAssetsRelDomain();
         meterMeterAssetsRelDomain.setMeterIds(meterIds);
         meterMeterAssetsRelDomain.setMon(settlementDomain.getMon());
-        meterMeterAssetsRelDomain.setPageSize(-1);
         List<MeterMeterAssetsRelDomain> meterMeterAssetsRelDomains = relService.getRel(meterMeterAssetsRelDomain);
         Map<Long, MeterMeterAssetsRelDomain> meterMeterAssetsRelDomainMap = meterMeterAssetsRelDomains.stream()
                 .collect(Collectors.toMap(MeterMeterAssetsRelDomain::getMeterAssetsId, a -> a, (k1, k2) -> k1));
@@ -766,26 +770,27 @@ public class MeterMoneyService {
 
 
         //writeFilesDomains
+
         //赋值排序
         writeFilesDomains.stream().forEach(t -> {
+            logger.info("===meterId:" + t.getMeterId() +"FunctionCode" +":" + t.getFunctionCode());
             MeterMeterAssetsRelDomain meterMeterAssetsRelExp =
                     meterMeterAssetsRelDomainMap.get(t.getMeterAssetsId());
             if (meterMeterAssetsRelExp == null) {
                 t.setMeterSn((long) 1);
-                if (t.getFunctionCode() == null) {
-                    t.setFunctionCode((long) 1);
-                }
             } else {
                 t.setMeterSn(meterMeterAssetsRelExp.getMeterSn() == null ? 1 :
                         meterMeterAssetsRelExp.getMeterSn().longValue());
-                if (t.getFunctionCode() == null) {
-                    t.setFunctionCode(meterMeterAssetsRelExp.getFunctionCode() == null ? 1 :
-                            meterMeterAssetsRelExp.getFunctionCode().longValue());
-                }
             }
             SettlementDomain settleExp =
                     meterSettlementRelMap.get(t.getMeterId());
             t.setSettlementId(settleExp.getId());
+
+
+            if (t.getFunctionCode() == null) {
+                t.setFunctionCode((long) 1);
+            }
+
 
         });
         //按月份 结算户 表序号排序
@@ -830,6 +835,9 @@ public class MeterMoneyService {
                     writeFilesDomain.getMon() + "_" + writeFilesDomain.getSn() + "_" + writeFilesDomain.getMeterId();
             MeterMoneyDomain meterMoneyExp =
                     meterMoneyDomainMap.get(meterMoneyKey);
+            logger.info("===22meterId:" + writeFilesDomain.getMeterId() +
+                    "FunctionCode" +":" + writeFilesDomain.getFunctionCode());
+
             if (meterMoneyExp != null && writeFilesDomain.getFunctionCode() != Long.valueOf(2) && !bankCollectionMeterIds.contains(writeFilesDomain.getMeterId())) {
                 if (priceExecutionDomainMap.get(meterMoneyExp.getPriceTypeId()) == null || priceExecutionDomainMap.get(meterMoneyExp.getPriceTypeId()).getPrice() == null) {
                     bankCollectionDetailBean.setPriceName("0");
@@ -859,7 +867,6 @@ public class MeterMoneyService {
                 // 应收电费
                 bankCollectionDetailBean.setShouldMoney(bankCollectionDetailBean.getTotalMoney().add(bankCollectionDetailBean.getRefundMoney()));
 
-                logger.info("===refundMoney:" + bankCollectionDetailBean.getRefundMoney() + "TotalMoney:" + bankCollectionDetailBean.getTotalMoney() + "ShouldMoeny:" + bankCollectionDetailBean.getShouldMoney());
             } else {
                 bankCollectionDetailBean.setPriceName("-");
                 bankCollectionDetailBean.setAddPower(BigDecimal.ZERO);
@@ -1365,11 +1372,13 @@ public class MeterMoneyService {
         MeterRelationDomain paramMeterRelation = new MeterRelationDomain();
         paramMeterRelation.setPageSize(-1);
         paramMeterRelation.setpMeterIds(pMeterIds);
+        paramMeterRelation.setMon(settlementDomain.getMon());
         List<MeterRelationDomain> meterRelationDomains =
-                cimService.findMeterRelationByWhere(paramMeterRelation);
+                billingService.getMeterRelation(paramMeterRelation);
 
         Map<Long, List<MeterRelationDomain>> meterRelationMap = null;
         List<Long> allMeterIds = null;
+        //有子计量点则关联所有子户 无子计量点则只在套扣关系显示父计量点
         if (meterRelationDomains != null && meterRelationDomains.size() > 0) {
             meterRelationMap =
                     meterRelationDomains.stream().collect(Collectors.groupingBy(MeterRelationDomain::getpMeterId));
@@ -1380,7 +1389,6 @@ public class MeterMoneyService {
                     allMeterIds.remove(t);
                 }
             }
-            ;
         }
         //根据计量点 找到子结算户
         List<SettlementMeterRelDomain> settlementMeterRelDomains = null;
@@ -1414,9 +1422,23 @@ public class MeterMoneyService {
 
         //插入父户
         settlementMeterIdMap.put(returnSettlement.getId(), pMeterIds);
-        List<TableDataBean> tableDataList = new ArrayList<>();
 
-        //所有结算户信息
+        //获取父计量点
+        MeterRelationDomain pParamMeterRelation = new MeterRelationDomain();
+        pParamMeterRelation.setPageSize(-1);
+        pParamMeterRelation.setMeterIds(allMeterIds);
+        pParamMeterRelation.setMon(settlementDomain.getMon());
+        List<MeterRelationDomain> pMeterRelationDomains =
+                billingService.getMeterRelation(pParamMeterRelation);
+
+        Map<Long, List<MeterRelationDomain>> pMeterRelationMap = null;
+        //有子计量点则关联所有子户 无子计量点则只在套扣关系显示父计量点
+        if (pMeterRelationDomains != null && pMeterRelationDomains.size() > 0) {
+            pMeterRelationMap =
+                    pMeterRelationDomains.stream().collect(Collectors.groupingBy(MeterRelationDomain::getMeterId));
+        }
+
+
         SettlementDomain allParamSett = new SettlementDomain();
         allParamSett.setSettlementIds(settlementIds);
         List<SettlementDomain> allSettlementDomains =
@@ -1446,6 +1468,8 @@ public class MeterMoneyService {
 
 
         //settlementIds 为 要查询的计算户及其子户的id
+        List<TableDataBean> tableDataList = new ArrayList<>();
+
         for (Long settlementId : settlementIds) {
 
             List<Long> meterIds = settlementMeterIdMap.get(settlementId);
@@ -1453,14 +1477,20 @@ public class MeterMoneyService {
             meterIdsAndPare.addAll(pMeterIds);
             //获取计量点信息
             MeterDomain paramMeterDomain = new MeterDomain();
-            paramMeterDomain.setMeterIds(meterIdsAndPare);
+            paramMeterDomain.setIds(meterIdsAndPare);
             paramMeterDomain.setPageSize(-1);
+            paramMeterDomain.setMon(settlementDomain.getMon());
             List<MeterDomain> meterDomains =
-                    cimService.findClearMeterDoaminByWhere(paramMeterDomain);
+                    meterService.getMeter(paramMeterDomain);
 
             if (meterDomains == null || meterDomains.size() < 1) {
                 return new ArrayList<>();
             }
+
+            for (int i = 0; i < meterDomains.size(); i++) {
+                meterDomains.get(i).setMeterOrder(i + 1);
+            }
+
 
             Map<Long, MeterDomain> meterMap =
                     meterDomains.stream().collect(Collectors.toMap(MeterDomain::getId, k -> k, (k1, k2) -> k1));
@@ -1549,7 +1579,6 @@ public class MeterMoneyService {
             List<WriteFilesDomain> writeFilesDomains =
                     billingService.getWriteFiles(paramWriteFile);
 
-            // 初始化未存储表计信息
             //表计信息
             List<Long> meterAssetsIds =
                     writeFilesDomains.stream().filter(t -> t.getMeterAssetsId() != null).map(WriteFilesDomain::getMeterAssetsId).distinct().collect(Collectors.toList());
@@ -1563,7 +1592,6 @@ public class MeterMoneyService {
                 meterAssetsDomainMap = meterAssetsDomains.stream()
                         .collect(Collectors.toMap(o -> o.getId(), a -> a, (k1, k2) -> k1));
             }
-            
 
 
             //获取电费记录
@@ -1590,7 +1618,7 @@ public class MeterMoneyService {
 
             tableData.setMon(settlementDomain.getMon());
             tableData.setSn(settlementDomain.getSn());
-            tableData.setSettlementNo(Long.valueOf(settlementDomainMap.get(settlementId).getSettlementNo()));
+            tableData.setSettlementNo(settlementDomainMap.get(settlementId).getSettlementNo());
             tableData.setSettlementName(settlementDomainMap.get(settlementId).getSettlementName());
             tableData.setSetAddress(settlementDomainMap.get(settlementId).getAddress());
             tableData.setPhoneNum(settlementDomainMap.get(settlementId).getSettlementPhone());
@@ -1649,6 +1677,7 @@ public class MeterMoneyService {
                         writeFilesBean.setMeterOrder((long) meterDomain.getMeterOrder());
                     }
 
+                    // mongo没有存电能表资产
                     if (meterAssetsDomainMap!=null && meterAssetsDomainMap.get(t.getMeterAssetsId()) != null) {
                         writeFilesBean.setMeterAssetsNo(meterAssetsDomainMap.get(t.getMeterAssetsId()).getMeterAssetsNo());
                     } else {
@@ -1748,9 +1777,12 @@ public class MeterMoneyService {
                 tableData.setTableData2(new JRBeanCollectionDataSource(transformerBeans));
             }
 
-            //套扣关系
-            List<MeterRelationDomain> meterRelationDomainsByP = new ArrayList<>();
+            //套扣关系 有子表显示子表 没有子表显示父表
+            List<MeterMeterRelBean> meterMeterRelBeans = new ArrayList<>();
+
             if (meterRelationDomains != null && meterRelationDomains.size() > 0) {
+
+                List<MeterRelationDomain> meterRelationDomainsByP = new ArrayList<>();
 
                 for (Long meterId : meterIds) {
                     if (meterRelationMap.get(meterId) != null) {
@@ -1761,8 +1793,14 @@ public class MeterMoneyService {
                     //获取子户计量点
                     List<Long> cmeterIds =
                             meterRelationDomainsByP.stream().map(MeterRelationDomain::getMeterId).distinct().collect(Collectors.toList());
+
+
+                    MeterDomain cParamMeterDomain = new MeterDomain();
+                    cParamMeterDomain.setIds(cmeterIds);
+                    cParamMeterDomain.setPageSize(-1);
+                    cParamMeterDomain.setMon(settlementDomain.getMon());
                     List<MeterDomain> cMeterDomains =
-                            cimService.getMeterByMeterIds(cmeterIds);
+                            meterService.getMeter(paramMeterDomain);
 
                     Map<Long, MeterDomain> cMeterMap = cMeterDomains.stream().collect(Collectors.toMap(MeterDomain::getId, k -> k, (k1, k2) -> k1));
 
@@ -1778,7 +1816,6 @@ public class MeterMoneyService {
                         cUserInfoMap = cUserInfoEntities.stream().collect(Collectors.toMap(UserDomain::getId, k -> k, (k1, k2) -> k1));
                     }
 
-                    List<MeterMeterRelBean> meterMeterRelBeans = new ArrayList<>();
                     for (MeterRelationDomain t : meterRelationDomainsByP) {
                         MeterMeterRelBean meterMeterRelBean = new MeterMeterRelBean();
                         if (userInfoEntities != null && userInfoEntities.size() > 0) {
@@ -1810,6 +1847,84 @@ public class MeterMoneyService {
                         } else {
                             meterMeterRelBean.setMeterRelationType("");
                         }
+
+                        meterMeterRelBean.setMeterRelationValue(t.getMeterRelationValue());
+                        meterMeterRelBeans.add(meterMeterRelBean);
+                    }
+                    //排序
+                    meterMeterRelBeans =
+                            meterMeterRelBeans.stream().sorted(Comparator.comparing(MeterMeterRelBean::getMeterOrder, Comparator.nullsLast(Integer::compareTo))).collect(Collectors.toList());
+                    tableData.setTableData3(new JRBeanCollectionDataSource(meterMeterRelBeans));
+                }
+            }
+
+            //套扣关系 有子表显示子表 没有子表显示父表
+
+            if (pMeterRelationDomains != null && pMeterRelationDomains.size() > 0) {
+
+                List<MeterRelationDomain> meterRelationDomainsByC = new ArrayList<>();
+
+                for (Long meterId : meterIds) {
+                    if (pMeterRelationMap.get(meterId) != null) {
+                        meterRelationDomainsByC.addAll(pMeterRelationMap.get(meterId));
+                    }
+                }
+                if (meterRelationDomainsByC != null && meterRelationDomainsByC.size() > 0) {
+                    //获取子户计量点
+                    List<Long> peterIds =
+                            meterRelationDomainsByC.stream().map(MeterRelationDomain::getpMeterId).distinct().collect(Collectors.toList());
+
+                    List<MeterDomain> pMeterDomains =
+                            cimService.getMeterByMeterIds(peterIds);
+
+                    Map<Long, MeterDomain> pMeterMap =
+                            pMeterDomains.stream().collect(Collectors.toMap(MeterDomain::getId, k -> k, (k1, k2) -> k1));
+
+                    //获取用户信息
+                    List<Long> pUserIds =
+                            pMeterDomains.stream().filter(t -> t.getUserId() != null).map(MeterDomain::getUserId).distinct().collect(Collectors.toList());
+
+                    List<UserDomain> pUserInfoEntities = null;
+                    Map<Long, UserDomain> pUserInfoMap = null;
+
+                    if (pUserIds != null) {
+                        pUserInfoEntities = cimService.getUserByIds(pUserIds);
+                        pUserInfoMap = pUserInfoEntities.stream().collect(Collectors.toMap(UserDomain::getId, k -> k, (k1, k2) -> k1));
+                    }
+
+                    for (MeterRelationDomain t : meterRelationDomainsByC) {
+                        MeterMeterRelBean meterMeterRelBean = new MeterMeterRelBean();
+                        if (userInfoEntities != null && userInfoEntities.size() > 0) {
+                            meterMeterRelBean.setUserNo(userInfoEntities.get(0).getUserNo());
+                            meterMeterRelBean.setUserName(userInfoEntities.get(0).getUserName());
+                        } else {
+                            meterMeterRelBean.setUserNo("");
+                            meterMeterRelBean.setUserName("");
+                        }
+                        meterMeterRelBean.setpMeterOrder(pMeterMap.get(t.getpMeterId()).getMeterOrder());
+
+                        if (pUserInfoEntities != null && pUserInfoEntities.size() > 0 && pMeterMap.get(t.getpMeterId()).getUserId() != null) {
+                            Long userId = pMeterMap.get(t.getpMeterId()).getUserId();
+                            meterMeterRelBean.setpUserNo(pUserInfoMap.get(userId).getUserNo());
+                            meterMeterRelBean.setpUserName(pUserInfoMap.get(userId).getUserName());
+                        } else {
+                            meterMeterRelBean.setUserNo("");
+                            meterMeterRelBean.setUserName("");
+                        }
+
+                        meterMeterRelBean.setMeterOrder(meterMap.get(t.getMeterId()).getMeterOrder());
+                        if (t.getMeterRelationType() == Byte.valueOf("1")) {
+                            meterMeterRelBean.setMeterRelationType("定量关系");
+                        } else if (t.getMeterRelationType() == Byte.valueOf("2")) {
+                            meterMeterRelBean.setMeterRelationType("定比关系");
+                        } else if (t.getMeterRelationType() == Byte.valueOf("3")) {
+                            meterMeterRelBean.setMeterRelationType("总分关系");
+
+                        } else {
+                            meterMeterRelBean.setMeterRelationType("");
+                        }
+
+                        meterMeterRelBean.setMeterRelationValue(t.getMeterRelationValue());
                         meterMeterRelBeans.add(meterMeterRelBean);
                     }
                     //排序
@@ -1888,11 +2003,11 @@ public class MeterMoneyService {
                     BigDecimal ladderSurcharges3 = BigDecimal.ZERO;
                     BigDecimal ladderSurcharges4 = BigDecimal.ZERO;
                     if (t.getLadderDataModels() != null && t.getLadderDataModels().size() > 0) {
-                        logger.info("LadderDataModels==========="+t.getLadderDataModels().size());
-                        Map<Integer,LadderMongoDomain> ladderMongoDomainMap=
+                        logger.info("LadderDataModels===========" + t.getLadderDataModels().size());
+                        Map<Integer, LadderMongoDomain> ladderMongoDomainMap =
                                 t.getLadderDataModels().stream().collect(Collectors.toMap(LadderMongoDomain::getLadderSn, a -> a, (k1, k2) -> k1));
                         for (LadderMongoDomain ladderMongoDomain : t.getLadderDataModels()) {
-                            if (ladderMongoDomain.getLadderSn().intValue()==1) {
+                            if (ladderMongoDomain.getLadderSn().intValue() == 1) {
                                 FeeRecStatisticsBean ladderbean = new FeeRecStatisticsBean();
                                 ladderbean.setMeterOrder(meterMap.get(t.getMeterId()).getMeterOrder());
                                 ladderbean.setName("第一阶梯");
@@ -1908,7 +2023,7 @@ public class MeterMoneyService {
                                 ladderbean.setAmount(ladderMongoDomain.getAmount().add(ladderbean.getSurcharges()));
                                 feeRecStatisticsBeans.add(ladderbean);
                             }
-                            if (ladderMongoDomain.getLadderSn().intValue()==2) {
+                            if (ladderMongoDomain.getLadderSn().intValue() == 2) {
                                 FeeRecStatisticsBean ladderbean = new FeeRecStatisticsBean();
                                 ladderbean.setMeterOrder(meterMap.get(t.getMeterId()).getMeterOrder());
                                 ladderbean.setName("第二阶梯");
@@ -1925,7 +2040,7 @@ public class MeterMoneyService {
                                 ladderbean.setAmount(ladderMongoDomain.getAmount().add(ladderbean.getSurcharges()));
                                 feeRecStatisticsBeans.add(ladderbean);
                             }
-                            if (ladderMongoDomain.getLadderSn().intValue()==3) {
+                            if (ladderMongoDomain.getLadderSn().intValue() == 3) {
                                 FeeRecStatisticsBean ladderbean = new FeeRecStatisticsBean();
                                 ladderbean.setMeterOrder(meterMap.get(t.getMeterId()).getMeterOrder());
                                 ladderbean.setName("第三阶梯");
@@ -1942,7 +2057,7 @@ public class MeterMoneyService {
                                 ladderbean.setAmount(ladderMongoDomain.getAmount().add(ladderbean.getSurcharges()));
                                 feeRecStatisticsBeans.add(ladderbean);
                             }
-                            if (ladderMongoDomain.getLadderSn().intValue()==4) {
+                            if (ladderMongoDomain.getLadderSn().intValue() == 4) {
                                 FeeRecStatisticsBean ladderbean = new FeeRecStatisticsBean();
                                 ladderbean.setMeterOrder(meterMap.get(t.getMeterId()).getMeterOrder());
                                 ladderbean.setName("第四阶梯");
@@ -1955,7 +2070,7 @@ public class MeterMoneyService {
                             }
 
                         }
-                        logger.info("feeRecStatisticsBeans=========="+feeRecStatisticsBeans.size());
+                        logger.info("feeRecStatisticsBeans==========" + feeRecStatisticsBeans.size());
                     }
 
                 }
@@ -2122,11 +2237,15 @@ public class MeterMoneyService {
                     meterMoneyBean.setCos(t.getCos() == null ? BigDecimal.ZERO :
                             t.getCos().multiply(BigDecimal.valueOf(100)));
                     meterMoneyBean.setPowerRateMoney(t.getPowerRateMoney());
-                    meterMoneyBean.setCalCapacity(t.getCalCapacity());
                     meterMoneyBean.setBasicMoney(t.getBasicMoney());
                     meterMoneyBean.setBasicPrice(basicPriceTypeId == null ?
                             BigDecimal.ZERO :
                             priceExecutionListMap.get(basicPriceTypeId).get(0).getPrice());
+                    if (meterMoneyBean.getBasicMoney().compareTo(BigDecimal.ZERO) == 0) {
+                        meterMoneyBean.setCalCapacity(BigDecimal.ZERO);
+                    } else {
+                        meterMoneyBean.setCalCapacity(meterMoneyBean.getBasicMoney() == null ? BigDecimal.ZERO : (meterMoneyBean.getBasicMoney().divide(meterMoneyBean.getBasicPrice(), 0, RoundingMode.HALF_UP)));
+                    }
                     meterMoneyBean.setTotalMoney(t.getTotalAmount());
                     meterMoneyBean.setRefundMoney(t.getRefundMoney().negate());
                     meterMoneyBean.setShouldMoney(t.getAmount());

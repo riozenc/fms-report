@@ -3,11 +3,13 @@ package org.fms.report.server.webapp.service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 import org.fms.report.common.util.FormatterUtil;
@@ -728,6 +730,26 @@ public class WriteFilesService {
             t.setWriteSn(meterMeterAssetsRelMap.get(t.getMeterId()));
         });
 
+        //显示表码
+        List<Long> meterMeterAssetsIds=
+                meterMeterAssetsRelDomains.stream().filter(t->t.getMeterAssetsId()!=null).map(MeterMeterAssetsRelDomain::getMeterAssetsId).distinct().collect(Collectors.toList());
+
+        Integer mon=billingService.getCurrentMon();
+        if(mon==null){
+            mon=Integer.valueOf(MonUtils.getMon());
+        }
+        WriteFilesDomain paramWriteFile=new WriteFilesDomain();
+        paramWriteFile.setMeterAssetsIds(meterMeterAssetsIds);
+        paramWriteFile.setMon(mon);
+        paramWriteFile.setTimeSeg((byte)0);
+        paramWriteFile.setPageSize(-1);
+        List<WriteFilesDomain> writeFilesDomains=
+                billingService.getWriteFiles(paramWriteFile);
+
+        Map<String,String> writeFilesMap=
+                Optional.ofNullable(writeFilesDomains).orElse(Collections.emptyList()).stream().filter(m -> m.getMeterAssetsId() != null)
+                        .collect(Collectors.toMap(t->t.getMeterAssetsId().toString()+"_"+t.getFunctionCode().toString(), a -> Optional.ofNullable(a.getEndNum()).orElse(BigDecimal.ZERO).stripTrailingZeros().toPlainString(), (k1, k2) -> k1));
+
         //按抄表序号 计量点 功能代码
         meterMeterAssetsRelDomains=
                 meterMeterAssetsRelDomains.stream().sorted(Comparator.comparing(MeterMeterAssetsRelDomain::getWriteSn, Comparator.nullsLast(Long::compareTo))
@@ -806,7 +828,14 @@ public class WriteFilesService {
             tableDataBean.setRatedCtCodeName("");
             tableDataBean.setPrice(midMeterDomain.getPriceType()==null
                     ?"":
-                    priceExecutionDomainMap.get(midMeterDomain.getPriceType()).getPrice().toString());
+                    priceExecutionDomainMap.get(midMeterDomain.getPriceType()).getPrice().stripTrailingZeros().toPlainString());
+            if(meterAssetsRelDomain.getMeterAssetsId()!=null && meterAssetsRelDomain.getFunctionCode()!=null){
+                tableDataBean.setEndNum(writeFilesMap.get(meterAssetsRelDomain.getMeterAssetsId().toString()+"_"+meterAssetsRelDomain.getFunctionCode().toString()));
+
+            }else{
+                tableDataBean.setEndNum("");
+            }
+
             tableDataBeans.add(tableDataBean);
         }
         if(tableDataBeans==null || tableDataBeans.size()<1){

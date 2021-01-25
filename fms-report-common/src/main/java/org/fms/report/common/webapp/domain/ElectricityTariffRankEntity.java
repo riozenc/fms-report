@@ -9,7 +9,7 @@ public class ElectricityTariffRankEntity {
     private Integer startMon;
     private Integer endMon;
     private Integer queryType;
-    private String limitSettlementNum;
+    private Long limitSettlementNum;
     private String queryTypeString;
     private List<Long> businessPlaceCodes;
 
@@ -45,11 +45,11 @@ public class ElectricityTariffRankEntity {
         this.queryType = queryType;
     }
 
-    public String getLimitSettlementNum() {
+    public Long getLimitSettlementNum() {
         return limitSettlementNum;
     }
 
-    public void setLimitSettlementNum(String limitSettlementNum) {
+    public void setLimitSettlementNum(Long limitSettlementNum) {
         this.limitSettlementNum = limitSettlementNum;
     }
 

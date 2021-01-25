@@ -51,6 +51,7 @@ public class MeterDomain extends ManagerParamEntity implements MybatisEntity {
     private List<Long> priceTypeIds; // 电价分组
     private List<Long> meterIds;
 
+
     public Byte getCosType() {
         return cosType;
     }

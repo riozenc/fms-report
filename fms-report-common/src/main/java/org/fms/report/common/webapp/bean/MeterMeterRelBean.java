@@ -14,6 +14,7 @@ public class MeterMeterRelBean {
     private Integer meterOrder;
     private String userName;
     private String meterRelationType;
+    private BigDecimal meterRelationValue;
 
     public String getpUserNo() {
         return pUserNo;
@@ -70,5 +71,13 @@ public class MeterMeterRelBean {
 
     public void setMeterRelationType(String meterRelationType) {
         this.meterRelationType = meterRelationType;
+    }
+
+    public BigDecimal getMeterRelationValue() {
+        return meterRelationValue;
+    }
+
+    public void setMeterRelationValue(BigDecimal meterRelationValue) {
+        this.meterRelationValue = meterRelationValue;
     }
 }

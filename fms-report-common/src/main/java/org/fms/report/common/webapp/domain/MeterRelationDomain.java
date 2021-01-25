@@ -27,13 +27,14 @@ public class MeterRelationDomain extends ManagerParamEntity implements MybatisEn
 	private Date createDate;
 	private String remark;
 	private Byte status;
+	private Integer mon;
 	
 	private String meterName;
 	private String meterNo;
 	private String meterOrder;
 
 	private List<Long> pMeterIds;
-
+	private List<Long> meterIds;
 	
 	public Long getId() {
 		return id;
@@ -128,5 +129,21 @@ public class MeterRelationDomain extends ManagerParamEntity implements MybatisEn
 
 	public void setpMeterIds(List<Long> pMeterIds) {
 		this.pMeterIds = pMeterIds;
+	}
+
+	public Integer getMon() {
+		return mon;
+	}
+
+	public void setMon(Integer mon) {
+		this.mon = mon;
+	}
+
+	public List<Long> getMeterIds() {
+		return meterIds;
+	}
+
+	public void setMeterIds(List<Long> meterIds) {
+		this.meterIds = meterIds;
 	}
 }

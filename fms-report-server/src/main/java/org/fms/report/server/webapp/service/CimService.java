@@ -446,7 +446,6 @@ public class CimService {
     public List<TransformerDomain> getAvaTransformerByWhere(TransformerDomain transformerDomain) {
         HttpHeaders httpHeaders = new HttpHeaders();
         httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        GsonUtils.toJson(transformerDomain);
         HttpResultPagination<TransformerDomain> httpResultPagination = null;
         try {
             httpResultPagination = titanTemplate.post("CIM-SERVER",

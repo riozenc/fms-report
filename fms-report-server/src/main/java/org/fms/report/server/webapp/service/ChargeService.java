@@ -2,7 +2,6 @@ package org.fms.report.server.webapp.service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.sql.Timestamp;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -117,15 +116,15 @@ public class ChargeService {
         List<Integer> integerMons = mons.stream().map(x -> Integer.valueOf(x)).collect(Collectors.toList());
         arrearageDomain.setMons(integerMons);
 
-
-        WriteSectMongoDomain writeSectMongoDomain = new WriteSectMongoDomain();
-        writeSectMongoDomain.setMon(arrearageDomain.getStartMon());
-        writeSectMongoDomain.setPageSize(-1);
-        if ("writer".equals(arrearageDomain.getGroupBy())) {
-            writeSectMongoDomain.setWritorIds(arrearageDomain.getWritorIds());
-        } else if ("dept".equals(arrearageDomain.getGroupBy())) {
-            writeSectMongoDomain.setBusinessPlaceCodes(arrearageDomain.getBusinessPlaceCodes());
+        Integer mon = arrearageDomain.getStartMon();
+        if (arrearageDomain.getStartMon() <= 202007) {
+            mon = 202007;
         }
+        WriteSectMongoDomain writeSectMongoDomain = new WriteSectMongoDomain();
+        writeSectMongoDomain.setMon(mon);
+        writeSectMongoDomain.setPageSize(-1);
+        writeSectMongoDomain.setWritorId(arrearageDomain.getWritorId());
+        writeSectMongoDomain.setBusinessPlaceCode(arrearageDomain.getBusinessPlaceCode());
 
         List<WriteSectMongoDomain> writeSectMongoDomains =
                 billingService.getMongoWriteSect(writeSectMongoDomain);
@@ -142,7 +141,7 @@ public class ChargeService {
                 writeSectMongoDomains.stream().collect(Collectors.toMap(o -> o.getId(), a -> a, (k1, k2) -> k1));
 
         UserDomain userDomain = new UserDomain();
-        userDomain.setMon(arrearageDomain.getStartMon());
+        userDomain.setMon(mon);
         userDomain.setWriteSectIds(writeSectIds);
         userDomain.setUserType(arrearageDomain.getCustomerType());
         userDomain.setPageSize(-1);
@@ -156,7 +155,7 @@ public class ChargeService {
 
         //根据用户id 汇总计量点id集合
         MeterDomain meterDomain = new MeterDomain();
-        meterDomain.setMon(arrearageDomain.getStartMon());
+        meterDomain.setMon(mon);
         meterDomain.setUserIds(userIds);
         List<MeterDomain> meterDomains =
                 meterService.getMeter(meterDomain);
@@ -171,157 +170,163 @@ public class ChargeService {
 
         List<ArrearageDomain> arrearageBeanList = arrearageDAO.findByWhere(arrearageDomain);
 
-        //收费记录
+       /* //收费记录
         ChargeInfoDomain chargeInfoDomain = new ChargeInfoDomain();
         chargeInfoDomain.setMons(integerMons);
         chargeInfoDomain.setPayDate(arrearageDomain.getCutDate() == null ? null :
-                new Timestamp(arrearageDomain.getCutDate().getTime() + (long) 1000 * 3600 * 24));
+                new Timestamp(arrearageDomain.getCutDate().getTime()));
         chargeInfoDomain.setMeterIds(meterIds);
+        chargeInfoDomain.setPageSize(-1);
         List<ChargeInfoDomain> chargeInfoDomainList = chargeInfoDAO.findByWhere(chargeInfoDomain);
 
 
         //向缴费记录List中插入抄表员信息
         for (ChargeInfoDomain infoDomain : chargeInfoDomainList) {
             infoDomain.setWritorId(meterDomainMap.get(infoDomain.getMeterId()).getWritorId());
-        }
+        }*/
 
 
         List<RecRateBean> resultList = new ArrayList<RecRateBean>();
 
-
-        if ("writer".equals(arrearageDomain.getGroupBy())) {
+        if (arrearageDomain.getWritorId() != null) {
             //系统用户-获取抄表员名称
             List<Map<Long, Object>> listmap = userDAO.findMapByDomain(userDomain);
             Map<Long, String> UserMap = FormatterUtil.ListMapToMap(listmap);
             tableData.setvName("抄表员");
 
-            for (Long key : arrearageDomain.getWritorIds()) {
+            Long key = arrearageDomain.getWritorId();
 
-                //应收户数
-                yshs =
-                        arrearageBeanList.stream().filter(a -> key.equals(a.getWritorId()) && a.getReceivable().compareTo(BigDecimal.ZERO) != 0).map(ArrearageDomain::getSettlementId).distinct().count();
-                //应收金额
-                ysje = arrearageBeanList.stream().filter(a -> key.equals(a.getWritorId())).map(x -> x.getReceivable()).reduce(BigDecimal.ZERO, BigDecimal::add);
+            //应收户数
+            yshs =
+                    arrearageBeanList.stream().filter(a -> key.equals(a.getWritorId()) && a.getReceivable().compareTo(BigDecimal.ZERO) != 0).map(ArrearageDomain::getSettlementId).distinct().count();
+            //应收金额
+            ysje = arrearageBeanList.stream().filter(a -> key.equals(a.getWritorId())).map(x -> x.getReceivable()).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                // 实收户数
+                /*// 实收户数
                 sshs =
                         arrearageBeanList.stream().filter(a -> key.equals(a.getWritorId()) && a.getReceivable().compareTo(BigDecimal.ZERO) != 0 && a.getOweMoney().compareTo(BigDecimal.ZERO) == 0).map(ArrearageDomain::getSettlementId).distinct().count();
                 //实收金额
-                ssje = chargeInfoDomainList.stream().filter(a -> key.equals(a.getWritorId())).map(x -> x.getFactMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                //欠费户数
-                qfhs = arrearageBeanList.stream().filter(a -> key.equals(a.getWritorId()) && Integer.valueOf(0).equals(a.getIsSettle())).map(ArrearageDomain::getSettlementId).distinct().count();
+                ssje = chargeInfoDomainList.stream().filter(a -> key.equals(a.getWritorId())).filter(t->t.getfChargeMode()!=6).map(x -> x.getFactMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
+                *///欠费户数
+            qfhs = arrearageBeanList.stream().filter(a -> key.equals(a.getWritorId()) && Integer.valueOf(0).equals(a.getIsSettle())).map(ArrearageDomain::getSettlementId).distinct().count();
 //            //欠费金额
-                qfje = arrearageBeanList.stream().filter(a -> key.equals(a.getWritorId())).map(x -> x.getOweMoney() == null ? BigDecimal.ZERO : x.getOweMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                RecRateBean recRateBean = new RecRateBean();
-                recRateBean.setName(UserMap.get(key));
-                recRateBean.setvName("抄表员");
-                recRateBean.setQfhs(qfhs);
-                recRateBean.setQfje(qfje);
-                recRateBean.setSshs(sshs);
-                recRateBean.setSsje(ssje);
-                recRateBean.setYshs(yshs);
-                recRateBean.setYsje(ysje);
-                if (yshs != 0) {
-                    recRateBean.setRecovery(ssje.divide(ysje, 4,
-                            BigDecimal.ROUND_HALF_UP));
-                } else {
-                    recRateBean.setRecovery(BigDecimal.valueOf(0));
-                }
+            qfje = arrearageBeanList.stream().filter(a -> key.equals(a.getWritorId())).map(x -> x.getOweMoney() == null ? BigDecimal.ZERO : x.getOweMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                resultList.add(recRateBean);
+            sshs = yshs - qfhs;
+            ssje = ysje.subtract(qfje);
+            RecRateBean recRateBean = new RecRateBean();
+            recRateBean.setName(UserMap.get(key));
+            recRateBean.setvName("抄表员");
+            recRateBean.setQfhs(qfhs);
+            recRateBean.setQfje(qfje);
+            recRateBean.setSshs(sshs);
+            recRateBean.setSsje(ssje);
+            recRateBean.setYshs(yshs);
+            recRateBean.setYsje(ysje);
+            if (yshs != 0) {
+                recRateBean.setRecovery(ssje.divide(ysje, 4,
+                        BigDecimal.ROUND_HALF_UP));
+            } else {
+                recRateBean.setRecovery(BigDecimal.valueOf(0));
             }
-        } else if ("dept".equals(arrearageDomain.getGroupBy())) {
+
+            resultList.add(recRateBean);
+        } else {
             DeptDomain deptDomain = new DeptDomain();
             //部门用户
             List<MapEntity> deptIdlistmap = deptDAO.findIdMapByDomain(deptDomain);
             Map<Long, String> deptIdMap = FormatterUtil.ListMapEntityToMap(deptIdlistmap);
 
             tableData.setvName("营业区域");
-            for (Long key : arrearageDomain.getBusinessPlaceCodes()) {
+            Long key = arrearageDomain.getBusinessPlaceCode();
 
-                //应收户数
-                yshs =
-                        arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode()) && a.getReceivable().compareTo(BigDecimal.ZERO) != 0).map(ArrearageDomain::getSettlementId).distinct().count();
-                //应收金额
-                ysje = arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode())).map(x -> x.getReceivable()).reduce(BigDecimal.ZERO, BigDecimal::add);
+            //应收户数
+            yshs =
+                    arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode()) && a.getReceivable().compareTo(BigDecimal.ZERO) != 0).map(ArrearageDomain::getSettlementId).distinct().count();
+            //应收金额
+            ysje = arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode())).map(x -> x.getReceivable()).reduce(BigDecimal.ZERO, BigDecimal::add);
 
-                // 实收户数
+               /* // 实收户数
                 sshs =
                         arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode()) && a.getReceivable().compareTo(BigDecimal.ZERO) != 0 && a.getOweMoney().compareTo(BigDecimal.ZERO) == 0).map(ArrearageDomain::getSettlementId).distinct().count();
                 //实收金额
-                ssje = chargeInfoDomainList.stream().filter(a -> key.equals(a.getBusinessPlaceCode())).map(x -> x.getFactMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                //欠费户数
-                qfhs = arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode()) && Integer.valueOf(0).equals(a.getIsSettle())).map(ArrearageDomain::getSettlementId).distinct().count();
+                ssje =
+                        chargeInfoDomainList.stream().filter(a -> key.equals(a.getBusinessPlaceCode())).filter(t->t.getfChargeMode()!=6).map(x -> x.getFactMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
+               */ //欠费户数
+            qfhs = arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode()) && Integer.valueOf(0).equals(a.getIsSettle())).map(ArrearageDomain::getSettlementId).distinct().count();
 //            //欠费金额
-                qfje = arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode())).map(x -> x.getOweMoney() == null ? BigDecimal.ZERO : x.getOweMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                RecRateBean recRateBean = new RecRateBean();
-                recRateBean.setName(deptIdMap.get(key));
-                recRateBean.setvName("营业区域");
-                recRateBean.setQfhs(qfhs);
-                recRateBean.setQfje(qfje);
-                recRateBean.setSshs(sshs);
-                recRateBean.setSsje(ssje);
-                recRateBean.setYshs(yshs);
-                recRateBean.setYsje(ysje);
-                if (yshs != 0) {
-                    recRateBean.setRecovery(ssje.divide(ysje, 4,
-                            BigDecimal.ROUND_HALF_UP));
-                } else {
-                    recRateBean.setRecovery(BigDecimal.valueOf(0));
-                }
-                resultList.add(recRateBean);
+            qfje = arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode())).map(x -> x.getOweMoney() == null ? BigDecimal.ZERO : x.getOweMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
+
+            sshs = yshs - qfhs;
+            ssje = ysje.subtract(qfje);
+            RecRateBean recRateBean = new RecRateBean();
+            recRateBean.setName(deptIdMap.get(key));
+            recRateBean.setvName("营业区域");
+            recRateBean.setQfhs(qfhs);
+            recRateBean.setQfje(qfje);
+            recRateBean.setSshs(sshs);
+            recRateBean.setSsje(ssje);
+            recRateBean.setYshs(yshs);
+            recRateBean.setYsje(ysje);
+            if (yshs != 0) {
+                recRateBean.setRecovery(ssje.divide(ysje, 4,
+                        BigDecimal.ROUND_HALF_UP));
+            } else {
+                recRateBean.setRecovery(BigDecimal.valueOf(0));
             }
-        } else if ("writeSect".equals(arrearageDomain.getGroupBy())) {
+            resultList.add(recRateBean);
 
-            tableData.setvName("抄表区段");
-            for (Long key : arrearageDomain.getWriteSectIds()) {
-
-                //应收户数
-                yshs =
-                        arrearageBeanList.stream().filter(a -> key.equals(a.getWriteSectId()) && a.getReceivable().compareTo(BigDecimal.ZERO) != 0).map(ArrearageDomain::getSettlementId).distinct().count();
-                //应收金额
-                ysje = arrearageBeanList.stream().filter(a -> key.equals(a.getWriteSectId())).map(x -> x.getReceivable()).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-                //抄表段信息---获取抄表员信息
-                //根据抄表段
-                // 实收户数
-                sshs =
-                        chargeInfoDomainList.stream().filter(a -> key.equals(a.getWriteSectId()) && a.getfChargeMode() != 4).map(ChargeInfoDomain::getSettlementId).distinct().count();
-                //实收金额
-                ssje = chargeInfoDomainList.stream().filter(a -> key.equals(a.getWriteSectId())).map(x -> x.getFactMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                //欠费户数
-                qfhs = arrearageBeanList.stream().filter(a -> key.equals(a.getWriteSectId()) && Integer.valueOf(0).equals(a.getIsSettle())).map(ArrearageDomain::getSettlementId).distinct().count();
-//            //欠费金额
-                qfje = arrearageBeanList.stream().filter(a -> key.equals(a.getWriteSectId())).map(x -> x.getOweMoney() == null ? BigDecimal.ZERO : x.getOweMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
-                RecRateBean recRateBean = new RecRateBean();
-                recRateBean.setName(writeSectMongoDomainMap.get(key).getWriteSectName());
-                recRateBean.setvName("抄表区段");
-                recRateBean.setQfhs(qfhs);
-                recRateBean.setQfje(qfje);
-                recRateBean.setSshs(sshs);
-                recRateBean.setSsje(ssje);
-                recRateBean.setYshs(yshs);
-                recRateBean.setYsje(ysje);
-                if (yshs != 0) {
-                    recRateBean.setRecovery(ssje.divide(ysje, 4,
-                            BigDecimal.ROUND_HALF_UP));
-                } else {
-                    recRateBean.setRecovery(BigDecimal.valueOf(0));
-                }
-                resultList.add(recRateBean);
-            }
         }
+//        else if ("writeSect".equals(arrearageDomain.getGroupBy())) {
+//
+//            tableData.setvName("抄表区段");
+//            for (Long key : arrearageDomain.getWriteSectIds()) {
+//
+//                //应收户数
+//                yshs =
+//                        arrearageBeanList.stream().filter(a -> key.equals(a.getWriteSectId()) && a.getReceivable().compareTo(BigDecimal.ZERO) != 0).map(ArrearageDomain::getSettlementId).distinct().count();
+//                //应收金额
+//                ysje = arrearageBeanList.stream().filter(a -> key.equals(a.getWriteSectId())).map(x -> x.getReceivable()).reduce(BigDecimal.ZERO, BigDecimal::add);
+//
+//                //抄表段信息---获取抄表员信息
+//                //根据抄表段
+//                /*// 实收户数
+//                sshs =
+//                        chargeInfoDomainList.stream().filter(a -> key.equals(a.getWriteSectId())).map(ChargeInfoDomain::getSettlementId).distinct().count();
+//                //实收金额
+//                ssje = chargeInfoDomainList.stream().filter(a -> key.equals(a.getWriteSectId())).filter(t->t.getfChargeMode()!=6).map(x -> x.getFactMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
+//               */ //欠费户数
+//                qfhs = arrearageBeanList.stream().filter(a -> key.equals(a.getWriteSectId()) && Integer.valueOf(0).equals(a.getIsSettle())).map(ArrearageDomain::getSettlementId).distinct().count();
+////            //欠费金额
+//                qfje = arrearageBeanList.stream().filter(a -> key.equals(a.getWriteSectId())).map(x -> x.getOweMoney() == null ? BigDecimal.ZERO : x.getOweMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
+//
+//                sshs = yshs - qfhs;
+//                ssje = ysje.subtract(qfje);
+//                RecRateBean recRateBean = new RecRateBean();
+//                recRateBean.setName(writeSectMongoDomainMap.get(key).getWriteSectName());
+//                recRateBean.setvName("抄表区段");
+//                recRateBean.setQfhs(qfhs);
+//                recRateBean.setQfje(qfje);
+//                recRateBean.setSshs(sshs);
+//                recRateBean.setSsje(ssje);
+//                recRateBean.setYshs(yshs);
+//                recRateBean.setYsje(ysje);
+//                if (yshs != 0) {
+//                    recRateBean.setRecovery(ssje.divide(ysje, 4,
+//                            BigDecimal.ROUND_HALF_UP));
+//                } else {
+//                    recRateBean.setRecovery(BigDecimal.valueOf(0));
+//                }
+//                resultList.add(recRateBean);
+//            }
+//        }
 
         List<TableDataBean> tableDataList = new ArrayList<>();
 
 
-        tableData.setTableData(new
-
-                JRBeanCollectionDataSource(resultList));
+        tableData.setTableData(new JRBeanCollectionDataSource(resultList));
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        tableData.setPrintDate(sdf.format(new
-
-                Date()));
+        tableData.setPrintDate(sdf.format(new Date()));
         tableDataList.add(tableData);
         return tableDataList;
     }
@@ -332,14 +337,16 @@ public class ChargeService {
         TableDataBean tableData = new TableDataBean();
 
 
-        List<DeptDomain> paramDeptList = deptService.findByWhere(chargeInfoDomain);
         List<Long> paramDeptIdList = new ArrayList<>();
-        for (DeptDomain deptDomain : paramDeptList) {
-            paramDeptIdList.add(deptDomain.getId());
+        // 最上级
+        if (chargeInfoDomain.getDeptIdLike() != null) {
+            List<DeptDomain> deptList =
+                    deptService.getDeptList(Long.valueOf(chargeInfoDomain.getDeptIdLike()));
+            paramDeptIdList = deptList.stream().map(DeptDomain::getId).collect(Collectors.toList());
+            paramDeptIdList.add(Long.valueOf(chargeInfoDomain.getDeptIdLike()));
+            chargeInfoDomain.setDeptParamList(paramDeptIdList);
         }
-        chargeInfoDomain.setDeptParamList(paramDeptIdList);
         List<FeeRecStatisticsBean> chargeInfoDomainList = chargeInfoDAO.getFeeRecStatistics(chargeInfoDomain);
-
 
 
 //系统用户
@@ -360,8 +367,8 @@ public class ChargeService {
         List<MapEntity> deptDeptIdlistmap = deptService.findDeptIdMapByDomain(deptDomain);
         Map<Long, String> deptDeptIdMap = FormatterUtil.ListMapEntityToMap(deptDeptIdlistmap);
 
-        Map<Long, WriteSectDomain> writeSectDomainMap=new HashMap<>();
-        if ("writeSectId".equals(chargeInfoDomain.getGroupBy())){
+        Map<Long, WriteSectDomain> writeSectDomainMap = new HashMap<>();
+        if ("writeSectId".equals(chargeInfoDomain.getGroupBy())) {
             WriteSectDomain writeSectDomain = new WriteSectDomain();
             writeSectDomain.setBusinessPlaceCodes(paramDeptIdList);
             //writeSectDomain.setMon(arrearage.getStartMon());
@@ -380,7 +387,7 @@ public class ChargeService {
             tableData.setvName("收费方式");
         } else if ("mon".equals(chargeInfoDomain.getGroupBy())) {
             tableData.setvName("年月");
-        }else if ("writeSectId".equals(chargeInfoDomain.getGroupBy())) {
+        } else if ("writeSectId".equals(chargeInfoDomain.getGroupBy())) {
             tableData.setvName("抄表区段");
         }
 
@@ -394,19 +401,19 @@ public class ChargeService {
                 chargeInfoBean.setName(systemCommonConfigMap.get(Integer.valueOf(chargeInfoBean.getName())));
             } else if ("mon".equals(chargeInfoDomain.getGroupBy())) {
                 chargeInfoBean.setName(String.valueOf(chargeInfoBean.getMon()));
-            }else if ("writeSectId".equals(chargeInfoDomain.getGroupBy())) {
-                if(chargeInfoBean.getName()==null||
-                        writeSectDomainMap.get(Long.parseLong(chargeInfoBean.getName()))==null){
+            } else if ("writeSectId".equals(chargeInfoDomain.getGroupBy())) {
+                if (chargeInfoBean.getName() == null ||
+                        writeSectDomainMap.get(Long.parseLong(chargeInfoBean.getName())) == null) {
                     chargeInfoBean.setName("无抄表区段");
-                }else{
-                    chargeInfoBean.setName(writeSectDomainMap.get(Long.parseLong(chargeInfoBean.getName())).getWriteSectName()+"/"+writeSectDomainMap.get(Long.parseLong(chargeInfoBean.getName())).getWriteSectName());
+                } else {
+                    chargeInfoBean.setName(writeSectDomainMap.get(Long.parseLong(chargeInfoBean.getName())).getWriteSectName() + "/" + writeSectDomainMap.get(Long.parseLong(chargeInfoBean.getName())).getWriteSectName());
                 }
             }
 
         }
 
-        chargeInfoDomainList=
-                chargeInfoDomainList.stream().sorted(Comparator.comparing(FeeRecStatisticsBean::getName,Comparator.nullsLast(String::compareTo))).collect(Collectors.toList());
+        chargeInfoDomainList =
+                chargeInfoDomainList.stream().sorted(Comparator.comparing(FeeRecStatisticsBean::getName, Comparator.nullsLast(String::compareTo))).collect(Collectors.toList());
         tableData.setTableData(new JRBeanCollectionDataSource(chargeInfoDomainList));
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         tableData.setPrintDate(sdf.format(new Date()));
@@ -427,7 +434,8 @@ public class ChargeService {
         //传入实体转换
         ChargeInfoEntity chargeInfoEntity = new ChargeInfoEntity();
         chargeInfoEntity.setOperator(chargeInfoDomain.getUserParam() == null ? null : chargeInfoDomain.getUserParam().toString());
-        chargeInfoEntity.setDept(chargeInfoDomain.getDeptParam() == null ? null : chargeInfoDomain.getDeptParam().toString());
+        //chargeInfoEntity.setDept(chargeInfoDomain.getDeptParam() == null ?
+        //       null : chargeInfoDomain.getDeptParam().toString());
         chargeInfoEntity.setWriteSect(chargeInfoDomain.getWriteSectIdParam() == null ? null : chargeInfoDomain.getWriteSectIdParam().toString());
         chargeInfoEntity.setStartPayDate(chargeInfoDomain.getStartDate());
         chargeInfoEntity.setEndPayDate(chargeInfoDomain.getEndDate());
@@ -436,6 +444,15 @@ public class ChargeService {
         chargeInfoEntity.setEndMon(chargeInfoDomain.getEndMon() == null ? null : chargeInfoDomain.getEndMon().toString());
         chargeInfoEntity.setPageSize(chargeInfoDomain.getPageSize());
 
+        List<DeptDomain> deptList = new ArrayList<>();
+        // 最上级
+        if (chargeInfoDomain.getDeptParam() != null) {
+            deptList = deptService.getDeptList(chargeInfoDomain.getDeptParam());
+            List<Long> businessPlaceCodes = deptList.stream().map(DeptDomain::getId).collect(Collectors.toList());
+            businessPlaceCodes.add(chargeInfoDomain.getDeptParam());
+            chargeInfoEntity.setBusinessPlaceCodes(businessPlaceCodes);
+            chargeInfoEntity.setDept(null);
+        }
         HttpResultPagination<ChargeInfoDetailEntity> httpResultPagination =
                 billingService.findChargeInfoDetails(chargeInfoEntity);
 
@@ -474,6 +491,8 @@ public class ChargeService {
         Map<Long, MeterMoneyDomain> moneyDomainMap =
                 meterMoneyDomains.stream().collect(Collectors.toMap(MeterMoneyDomain::getId, a -> a, (k1, k2) -> k1));
 
+        chargeInfoDetailEntities =
+                chargeInfoDetailEntities.stream().sorted(Comparator.comparing(ChargeInfoDetailEntity::getPayDate)).collect(Collectors.toList());
 
         List<FeeRecStatisticsBean> feeRecStatisticsBeans = new ArrayList<FeeRecStatisticsBean>();
 
@@ -593,7 +612,7 @@ public class ChargeService {
         List<ChargeInfoDomain> chargeInfoDomains =
                 billingService.findChargeByIds(chargeInfoIds);
 
-        List<Long> operatorIds=
+        List<Long> operatorIds =
                 chargeInfoDomains.stream().map(ChargeInfoDomain::getOperator).distinct().collect(Collectors.toList());
 
         Map<Long, String> sysUserMap = userDAO.findByIds(operatorIds)
@@ -660,14 +679,14 @@ public class ChargeService {
 
             List<NoteInfoDomain> noteInfoDomains = v;
             tableDataBean.setMon(v.get(0).getMon());
-            tableDataBean.setSettlementNo(Long.valueOf(v.get(0).getSettlementNo()));
+            tableDataBean.setSettlementNo(v.get(0).getSettlementNo());
             tableDataBean.setSettlementName(v.get(0).getSettlementName());
             BigDecimal punishMoney =
                     noteInfoDomains.stream().filter(t -> t.getPunishMoney() != null)
                             .map(NoteInfoDomain::getPunishMoney).reduce(BigDecimal.ZERO, BigDecimal::add);
             tableDataBean.setFactPunish(punishMoney);
             BigDecimal factMoney =
-                    noteInfoDomains.stream().filter(t -> t.getFactMoney() != null).filter(t->t.getfChargeMode()!=4).filter(t->t.getfChargeMode()!=5)
+                    noteInfoDomains.stream().filter(t -> t.getFactMoney() != null).filter(t -> t.getfChargeMode() != 4).filter(t -> t.getfChargeMode() != 5)
                             .map(NoteInfoDomain::getFactMoney).reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal factPre =
@@ -681,8 +700,8 @@ public class ChargeService {
 
             tableDataBean.setFactTotal(arrears);
             tableDataBean.setMoneyInWord(NumToString.number2CNMontrayUnit(arrears));
-            if(factPre.compareTo(BigDecimal.ZERO)<0){
-                factPre=BigDecimal.ZERO;
+            if (factPre.compareTo(BigDecimal.ZERO) < 0) {
+                factPre = BigDecimal.ZERO;
             }
             tableDataBean.setReceivableSum(punishMoney.add(factMoney).add(factPre));
             tableDataBean.setThisBalance(v.get(v.size() - 1).getThisBalance());
@@ -752,9 +771,9 @@ public class ChargeService {
 
             //过滤预收
             List<Long> meterIds =
-                    v.stream().filter(t->t.getMeterId()!=null).filter(t -> t.getYsTypeCode() != 2).map(NoteInfoDomain::getMeterId).distinct().collect(Collectors.toList());
+                    v.stream().filter(t -> t.getMeterId() != null).filter(t -> t.getYsTypeCode() != 2).map(NoteInfoDomain::getMeterId).distinct().collect(Collectors.toList());
 
-            if(meterIds==null||meterIds.size()<1){
+            if (meterIds == null || meterIds.size() < 1) {
                 tableDataBean.setLastBalance(v.get(0).getLastBalance());
 
             }
@@ -839,8 +858,11 @@ public class ChargeService {
                         feeRecStatisticsBean.setStartNum(writeFilesDomain.getStartNum());
                         feeRecStatisticsBean.setEndNum(writeFilesDomain.getEndNum());
                         feeRecStatisticsBean.setFactorNum(writeFilesDomain.getFactorNum());
-
-                        feeRecStatisticsBean.setTotalPower(t.getTotalPower());
+                        if (writeFilesDomain.getFunctionCode() == 2) {
+                            feeRecStatisticsBean.setTotalPower(t.getqTotalPower());
+                        } else {
+                            feeRecStatisticsBean.setTotalPower(t.getTotalPower());
+                        }
                         feeRecStatisticsBean.setReceivable(t.getVolumeCharge().add(t.getSurcharges()));
                         feeRecStatisticsBean.setPrice(price);
                         feeRecStatisticsBean.setName(priceTypeDomainMap.get(t.getPriceTypeId()).getPriceName());
@@ -1293,7 +1315,7 @@ public class ChargeService {
         List<ChargeInfoDomain> chargeInfoDomains =
                 billingService.findChargeByIds(chargeInfoIds);
 
-        List<Long> operatorIds=
+        List<Long> operatorIds =
                 chargeInfoDomains.stream().map(ChargeInfoDomain::getOperator).distinct().collect(Collectors.toList());
 
         Map<Long, String> sysUserMap = userDAO.findByIds(operatorIds)
@@ -1363,14 +1385,14 @@ public class ChargeService {
 
             List<NoteInfoDomain> noteInfoDomains = v;
             tableDataBean.setMon(v.get(0).getMon());
-            tableDataBean.setSettlementNo(Long.valueOf(v.get(0).getSettlementNo()));
+            tableDataBean.setSettlementNo(v.get(0).getSettlementNo());
             tableDataBean.setSettlementName(v.get(0).getSettlementName());
             BigDecimal punishMoney =
                     noteInfoDomains.stream().filter(t -> t.getPunishMoney() != null)
                             .map(NoteInfoDomain::getPunishMoney).reduce(BigDecimal.ZERO, BigDecimal::add);
             tableDataBean.setFactPunish(punishMoney);
             BigDecimal factMoney =
-                    noteInfoDomains.stream().filter(t -> t.getFactMoney() != null).filter(t->t.getfChargeMode()!=4).filter(t->t.getfChargeMode()!=5)
+                    noteInfoDomains.stream().filter(t -> t.getFactMoney() != null).filter(t -> t.getfChargeMode() != 4).filter(t -> t.getfChargeMode() != 5)
                             .map(NoteInfoDomain::getFactMoney).reduce(BigDecimal.ZERO, BigDecimal::add);
 
             BigDecimal factPre =
@@ -1386,11 +1408,11 @@ public class ChargeService {
             tableDataBean.setMoneyInWord(NumToString.number2CNMontrayUnit(arrears));
             tableDataBean.setReceivableSum(punishMoney.add(factMoney).add(factPre));
 
-            List<NoteInfoDomain> balanceNoteInfoDomains=
+            List<NoteInfoDomain> balanceNoteInfoDomains =
                     noteInfoDomains.stream().sorted(Comparator.comparing(NoteInfoDomain::getId)).collect(Collectors.toList());
 
 
-            tableDataBean.setThisBalance(balanceNoteInfoDomains.get(balanceNoteInfoDomains.size()-1).getThisBalance());
+            tableDataBean.setThisBalance(balanceNoteInfoDomains.get(balanceNoteInfoDomains.size() - 1).getThisBalance());
 
             //获取计算户号 取本月冲抵余额
             List<Long> monSettlementIds =
@@ -1398,7 +1420,7 @@ public class ChargeService {
 
             ChargeInfoDomain chargeInfoDomain = new ChargeInfoDomain();
             chargeInfoDomain.setfChargeMode((short) 4);
-            chargeInfoDomain.setMon(Integer.valueOf(v.get(v.size()-1).getMon().toString()));
+            chargeInfoDomain.setMon(Integer.valueOf(v.get(v.size() - 1).getMon().toString()));
             chargeInfoDomain.setSettlementIds(monSettlementIds);
             List<ChargeInfoDomain> lastBalanceChargeInfoDomains =
                     billingService.chargeBySettleIds(chargeInfoDomain);
@@ -1456,9 +1478,9 @@ public class ChargeService {
 
             //过滤预收
             List<Long> meterIds =
-                    v.stream().filter(t->t.getMeterId()!=null).filter(t -> t.getYsTypeCode() != 2).map(NoteInfoDomain::getMeterId).distinct().collect(Collectors.toList());
+                    v.stream().filter(t -> t.getMeterId() != null).filter(t -> t.getYsTypeCode() != 2).map(NoteInfoDomain::getMeterId).distinct().collect(Collectors.toList());
 
-            if(meterIds==null || meterIds.size()<1){
+            if (meterIds == null || meterIds.size() < 1) {
                 tableDataBean.setLastBalance(v.get(0).getLastBalance());
             }
             //0电费不产生欠费的计量点
@@ -1469,7 +1491,7 @@ public class ChargeService {
                     billingService.findArrearageBySettleIdMonAndSn(arrearageDomain);
 
             List<Long> zeroMoneyMeterIds = arrearageDomains.stream()
-                    .filter(t->t.getMeterId()!=null).filter(t -> t.getReceivable().compareTo(BigDecimal.ZERO) == 0 && t.getTotalPower().compareTo(BigDecimal.ZERO) != 0)
+                    .filter(t -> t.getMeterId() != null).filter(t -> t.getReceivable().compareTo(BigDecimal.ZERO) == 0 && t.getTotalPower().compareTo(BigDecimal.ZERO) != 0)
                     .distinct().map(ArrearageDomain::getMeterId).collect(Collectors.toList());
 
             if (zeroMoneyMeterIds != null && zeroMoneyMeterIds.size() > 0) {
@@ -1739,9 +1761,9 @@ public class ChargeService {
         String groupBy = chargeInfoDomain.getGroupBy();
         TableDataBean tableData = new TableDataBean();
         //查询参数
-        Calendar   calendar = new GregorianCalendar();
+        Calendar calendar = new GregorianCalendar();
         calendar.setTime(chargeInfoDomain.getEndDate());
-        calendar.add(calendar.DATE,1); //把日期往后增加一天,整数  往后推,负数往前移动
+        calendar.add(calendar.DATE, 1); //把日期往后增加一天,整数  往后推,负数往前移动
         //传入实体转换
         ChargeInfoEntity chargeInfoEntity = new ChargeInfoEntity();
         chargeInfoEntity.setOperator(chargeInfoDomain.getOperator().toString());
@@ -1767,10 +1789,9 @@ public class ChargeService {
         }
 
 
-
-        List<FeeRecStatisticsBean> feeRecStatisticsBeans=new ArrayList<>();
-        chargeInfoDetailEntities.forEach(t->{
-            FeeRecStatisticsBean feeRecStatisticsBean= new FeeRecStatisticsBean();
+        List<FeeRecStatisticsBean> feeRecStatisticsBeans = new ArrayList<>();
+        chargeInfoDetailEntities.forEach(t -> {
+            FeeRecStatisticsBean feeRecStatisticsBean = new FeeRecStatisticsBean();
             feeRecStatisticsBean.setRow1name(t.getColumnName());
             feeRecStatisticsBean.setFactMoney(t.getFactMoney());
             feeRecStatisticsBean.setFactTotal(t.getFactTotal());
@@ -1812,8 +1833,8 @@ public class ChargeService {
             deptList.add(dept);
         }
 
-        deptList.forEach(t->{
-            if(t.getDeptName()==null || "".equals(t.getDeptName())){
+        deptList.forEach(t -> {
+            if (t.getDeptName() == null || "".equals(t.getDeptName())) {
                 t.setDeptName(t.getTitle());
             }
         });
@@ -1824,9 +1845,9 @@ public class ChargeService {
                 deptList.stream().filter(m -> m.getId() != null).map(DeptDomain::getId).distinct().collect(Collectors.toList());
 
         //查询参数
-        Calendar   calendar = new GregorianCalendar();
+        Calendar calendar = new GregorianCalendar();
         calendar.setTime(chargeInfoDomain.getEndDate());
-        calendar.add(calendar.DATE,1); //把日期往后增加一天,整数  往后推,负数往前移动
+        calendar.add(calendar.DATE, 1); //把日期往后增加一天,整数  往后推,负数往前移动
         String groupBy = chargeInfoDomain.getGroupBy();
         TableDataBean tableData = new TableDataBean();
         //传入实体转换
@@ -1842,7 +1863,7 @@ public class ChargeService {
         if (chargeInfoDetailEntities == null || chargeInfoDetailEntities.size() < 1) {
             return new ArrayList<>();
         }
-        List<Long> operatorIds=
+        List<Long> operatorIds =
                 chargeInfoDetailEntities.stream().map(ChargeInfoDetailEntity::getOperator).distinct().collect(Collectors.toList());
 
         Map<Long, String> sysUserMap = userDAO.findByIds(operatorIds)

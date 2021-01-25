@@ -60,7 +60,7 @@ public class ArrearageDomain extends ParamDomain implements MybatisEntity {
     private Byte userType;//
     private String deptName;
     private String setAddress;
-    private Long settlementNo;
+    private String  settlementNo;
     private String tg;
     private String settlementName;
     private BigDecimal cos;// 功率因数 COS decimal(5,2) 5 2 FALSE FALSE FALSE
@@ -547,11 +547,11 @@ public class ArrearageDomain extends ParamDomain implements MybatisEntity {
         this.writeDate = writeDate;
     }
 
-    public Long getSettlementNo() {
+    public String  getSettlementNo() {
         return settlementNo;
     }
 
-    public void setSettlementNo(Long settlementNo) {
+    public void setSettlementNo(String settlementNo) {
         this.settlementNo = settlementNo;
     }
 

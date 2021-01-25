@@ -13,6 +13,7 @@ import org.fms.report.common.webapp.domain.ChargeInfoEntity;
 import org.fms.report.common.webapp.domain.ElectricityTariffRankEntity;
 import org.fms.report.common.webapp.domain.MeterDomain;
 import org.fms.report.common.webapp.domain.MeterMoneyDomain;
+import org.fms.report.common.webapp.domain.MeterRelationDomain;
 import org.fms.report.common.webapp.domain.NoteInfoDomain;
 import org.fms.report.common.webapp.domain.PriceExecutionDomain;
 import org.fms.report.common.webapp.domain.PriceLadderRelaDomain;
@@ -496,4 +497,36 @@ public class BillingService {
         }
         return list;
     }
+
+    public List<MeterRelationDomain> getMeterRelation(MeterRelationDomain meterRelationDomain) {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        List<MeterRelationDomain> list = new ArrayList<>();
+        try {
+            list = titanTemplate.post("BILLING-SERVER",
+                    "billingServer/meterRelation/getMeterRelation", httpHeaders,
+                    GsonUtils.toJson(meterRelationDomain),
+                    new TypeReference<List<MeterRelationDomain>>() {
+                    });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return list;
+    }
+
+    public Integer getCurrentMon() {
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        Integer currentMon = null;
+        try {
+            currentMon = titanTemplate.postJson("TITAN-CONFIG", "titan" +
+                            "-config/sysCommConfig/getCurrentMon",
+                    httpHeaders, null, Integer.class);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return currentMon;
+    }
+
+
 }

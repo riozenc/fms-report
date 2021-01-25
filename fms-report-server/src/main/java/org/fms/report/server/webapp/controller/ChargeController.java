@@ -3,6 +3,7 @@ package org.fms.report.server.webapp.controller;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -59,18 +60,7 @@ public class ChargeController {
 
         ArrearageDomain arrearageDmoain = JSONObject.parseObject(json, ArrearageDomain.class);
 
-        String pdfFileName = "";
-        List<Long> BusinessPlace = arrearageDmoain.getBusinessPlaceCodes() == null ? null : arrearageDmoain.getBusinessPlaceCodes();
-        String groupType = arrearageDmoain.getGroupBy() == null ? null : arrearageDmoain.getGroupBy();
-        List<Long> WritorIds = arrearageDmoain.getWritorIds() == null ? null : arrearageDmoain.getWritorIds();
-
-        if ("writer".equals(groupType)) {
-            pdfFileName = "ChargeRecRate-" + groupType + "-" + arrearageDmoain.getCutDate().toString() + "-" + String.join(",", WritorIds.stream().map(aLong -> String.valueOf(aLong)).collect(Collectors.toList()));
-        } else if ("dept".equals(groupType)) {
-            pdfFileName = "ChargeRecRate-" + groupType + "-" + arrearageDmoain.getCutDate().toString() + "-" + String.join(",", BusinessPlace.stream().map(aLong -> String.valueOf(aLong)).collect(Collectors.toList()));
-        } else if ("writeSect".equals(groupType)) {
-            pdfFileName = "ChargeRecRate-" + groupType + "-" + arrearageDmoain.getCutDate().toString() + "-" + String.join(",", WritorIds.stream().map(aLong -> String.valueOf(aLong)).collect(Collectors.toList()));
-        }
+        String pdfFileName = "ChargeRecRate-" + Calendar.getInstance().getTimeInMillis();
         pdfFileName = FormatterUtil.getMD5String(pdfFileName) + ".pdf";
         String filePath = "/static/pdf/" + arrearageDmoain.getStartMon() + "" + arrearageDmoain.getEndMon() + "/" + pdfFileName;
         String returnUrl = "report" + filePath;
@@ -99,6 +89,49 @@ public class ChargeController {
         }
         JasperHelper jasperHelper = new JasperHelper();
         Boolean result = jasperHelper.exportPdf(filePath, file.getPath(), m, jrDataSource);
+        if (result.equals(true)) {
+            return new HttpResult(HttpResult.SUCCESS, "执行成功", returnUrl);
+        } else {
+            return new HttpResult(HttpResult.ERROR, "执行失败");
+        }
+    }
+
+    // 回收率pdf预览
+    @ResponseBody
+    @RequestMapping(value = "/recRateToExcel")
+    public Object recRateToExcel(@RequestBody String json) throws JRException, IOException {
+
+        ArrearageDomain arrearageDmoain = JSONObject.parseObject(json, ArrearageDomain.class);
+
+        String pdfFileName = "ChargeRecRate-" + Calendar.getInstance().getTimeInMillis();
+        pdfFileName = FormatterUtil.getMD5String(pdfFileName) + ".xls";
+        String filePath = "/static/xls/" + arrearageDmoain.getStartMon() + "" + arrearageDmoain.getEndMon() + "/" + pdfFileName;
+        String returnUrl = "report" + filePath;
+
+        if (arrearageDmoain.getAgainStat() != null && !arrearageDmoain.getAgainStat()) {
+            ApplicationHome h = new ApplicationHome(getClass());
+            String baseUrl = FileUtil.getSaveFilePath();
+            File file = new File(baseUrl + filePath);
+            if (file.exists()) {
+                return new HttpResult(HttpResult.SUCCESS, "执行成功", returnUrl);
+            }else{
+                return new HttpResult<String>(HttpResult.ERROR, "未统计过的报表请选中重新统计",null);
+            }
+        }
+        List<TableDataBean> tableDataList = chargeService.recRate(arrearageDmoain);
+        JRDataSource jrDataSource = new JRBeanCollectionDataSource(tableDataList);
+        Map<String, Object> m = new HashMap<>();
+        m.put("query", "其他参数测试");
+        ClassPathResource cpr = new ClassPathResource("static/jasperreport/RecoveryRate.jasper");
+        InputStream is = cpr.getInputStream();
+        File file = File.createTempFile("Zero", "jasper");
+        try {
+            FileUtils.copyInputStreamToFile(is, file);
+        } finally {
+            IOUtils.closeQuietly(is);
+        }
+        JasperHelper jasperHelper = new JasperHelper();
+        Boolean result = jasperHelper.exportExcel(filePath, file.getPath(), m, jrDataSource);
         if (result.equals(true)) {
             return new HttpResult(HttpResult.SUCCESS, "执行成功", returnUrl);
         } else {
@@ -217,7 +250,6 @@ public class ChargeController {
     public Object chargeDetails(@RequestBody String json) throws JRException, IOException {
 
         ChargeInfoDomain chargeInfoDomain = JSONObject.parseObject(json, ChargeInfoDomain.class);
-
         String pdfFileName = json;
 
 

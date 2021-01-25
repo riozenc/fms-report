@@ -20,7 +20,7 @@ import com.riozenc.titanTool.spring.web.http.HttpResult;
 @TransactionService
 public class UserService {
 
-    @TransactionDAO()
+    @TransactionDAO
     private UserDAO userDAO;
 
     @Autowired

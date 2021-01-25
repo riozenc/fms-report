@@ -68,7 +68,7 @@ public class TableDataBean {
     private String endDate;
     private String lastWriteDate;//上次抄表日期
     private String writeDate;//本次抄表日期
-    private Long settlementNo;//结算编号
+    private String settlementNo;//结算编号
     private String tg;//台区
     private String settlementName;//结算户名称
     private String setAddress;//用电地址
@@ -144,6 +144,7 @@ public class TableDataBean {
     private String writorName;
     private String linkMan;
     private Integer ladderNum;
+    private String endNum;
 
     public Long getWritorId() {
         return writorId;
@@ -761,11 +762,11 @@ public class TableDataBean {
         this.lastBalance = lastBalance;
     }
 
-    public Long getSettlementNo() {
+    public String getSettlementNo() {
         return settlementNo;
     }
 
-    public void setSettlementNo(Long settlementNo) {
+    public void setSettlementNo(String settlementNo) {
         this.settlementNo = settlementNo;
     }
 
@@ -1078,5 +1079,13 @@ public class TableDataBean {
 
     public void setTableData7(JRBeanCollectionDataSource tableData7) {
         this.tableData7 = tableData7;
+    }
+
+    public String getEndNum() {
+        return endNum;
+    }
+
+    public void setEndNum(String endNum) {
+        this.endNum = endNum;
     }
 }

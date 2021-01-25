@@ -57,6 +57,7 @@ public class ArrearageController {
     public Object summaryShow(@RequestBody String json) throws IOException,
             JRException {
         ArrearageDomain arrearageDomain = GsonUtils.readValue(json, ArrearageDomain.class);
+        arrearageDomain.setIsSettle(0);
         String pdfFileName = "";
         if (arrearageDomain.getWritorId() != null) {
             pdfFileName = arrearageDomain.getStartMon() + "-" + arrearageDomain.getEndMon() + "ArrearageSum-Writor" + arrearageDomain.getWritorId() + "-" + arrearageDomain.getGroupBy() + ".pdf";
@@ -113,6 +114,7 @@ public class ArrearageController {
     @RequestMapping(value = "/SummaryExcel")
     public Object summaryExcel(@RequestBody String json) throws IOException, JRException {
         ArrearageDomain arrearageDomain = GsonUtils.readValue(json, ArrearageDomain.class);
+        arrearageDomain.setIsSettle(0);
         String pdfFileName = "";
         if (arrearageDomain.getWritorId() != null) {
             pdfFileName =

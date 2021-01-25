@@ -133,6 +133,7 @@ public class WriteFilesDomain extends ManagerParamEntity implements MybatisEntit
 
     private Long meterSn;
 
+    private List<Long> meterAssetsIds;
     public Long getMeterSn() {
         return meterSn;
     }
@@ -621,5 +622,13 @@ public class WriteFilesDomain extends ManagerParamEntity implements MybatisEntit
 
     public void setWritePower(BigDecimal writePower) {
         this.writePower = writePower;
+    }
+
+    public List<Long> getMeterAssetsIds() {
+        return meterAssetsIds;
+    }
+
+    public void setMeterAssetsIds(List<Long> meterAssetsIds) {
+        this.meterAssetsIds = meterAssetsIds;
     }
 }

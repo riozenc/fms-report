@@ -15,6 +15,7 @@ import org.fms.report.common.util.CustomCollectors;
 import org.fms.report.common.util.MonUtils;
 import org.fms.report.common.util.NumToString;
 import org.fms.report.common.webapp.bean.ArrearageSumBean;
+import org.fms.report.common.webapp.bean.FeeRecStatisticsBean;
 import org.fms.report.common.webapp.bean.TableDataBean;
 import org.fms.report.common.webapp.domain.ArrearageDomain;
 import org.fms.report.common.webapp.domain.BankCollectionEntity;
@@ -26,7 +27,6 @@ import org.fms.report.common.webapp.domain.SettlementDomain;
 import org.fms.report.common.webapp.domain.SfPowerBankDomain;
 import org.fms.report.common.webapp.domain.UserDomain;
 import org.fms.report.common.webapp.domain.WriteSectDomain;
-import org.fms.report.common.webapp.returnDomain.FeeRecStatisticsBean;
 import org.fms.report.server.webapp.dao.ArrearageDAO;
 import org.fms.report.server.webapp.dao.DeptDAO;
 import org.fms.report.server.webapp.dao.SystemCommonConfigDAO;
@@ -345,9 +345,12 @@ public class ArrearageService {
                     .collect(Collectors.toMap(ArrearageDomain::getMeterId, a -> a, (k1, k2) -> k1));
 
             BigDecimal oweSumMoney=BigDecimal.ZERO;
+            BigDecimal deductionBalance=BigDecimal.ZERO;
             for (Long key:arrearageDomainMapById.keySet()){
                 oweSumMoney=
                         oweSumMoney.add(arrearageDomainMapById.get(key).getOweMoney());
+                deductionBalance=
+                        deductionBalance.add(arrearageDomainMapById.get(key).getDeductionBalance());
             }
 
             List<Long> meterIds=
@@ -407,7 +410,7 @@ public class ArrearageService {
             }
 
             tableData.setRefundMoney(recallMoney.add(tableData.getRefundMoney()).negate());
-            tableData.setLastBalance(item.get(0).getDeductionBalance());
+            tableData.setLastBalance(deductionBalance);
             tableData.setLastBalance(tableData.getLastBalance().subtract(recallMoney));
             tableData.setMoneyInWord(NumToString.number2CNMontrayUnit(tableData.getOweMoneySum()));
             tableData.setDept(item.get(0).getDeptName());
@@ -636,7 +639,7 @@ public class ArrearageService {
                 bankCollectBean.setDay(Integer.valueOf(bankCollectionEntity.getDate().substring(6, 8)));
 
             }
-            bankCollectBean.setSettlementNo(Long.valueOf(bankCollection.getSettlementNo()));
+            bankCollectBean.setSettlementNo(bankCollection.getSettlementNo());
             bankCollectBean.setOpendingName(bankCollection.getOpendingBankName());
             bankCollectBean.setDwBankNo(bankCollection.getDwBankNo());
             bankCollectBean.setConnectName(bankCollection.getConnectBankName());
