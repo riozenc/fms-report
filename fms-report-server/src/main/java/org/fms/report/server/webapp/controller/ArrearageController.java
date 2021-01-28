@@ -38,6 +38,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.riozenc.titanTool.common.date.DateUtil;
 import com.riozenc.titanTool.common.json.utils.GsonUtils;
 import com.riozenc.titanTool.spring.web.http.HttpResult;
+import com.riozenc.titanTool.spring.web.http.HttpResultPagination;
 
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
@@ -413,5 +414,15 @@ public class ArrearageController {
         } else {
             return new HttpResult(HttpResult.ERROR, "执行失败");
         }
+    }
+    
+    // 超级报表-欠费汇总查询
+    @ResponseBody
+    @RequestMapping(value = "/Summary")
+    public HttpResultPagination<?> summary(@RequestBody String json) throws IOException,
+            JRException {
+        ArrearageDomain arrearageDomain = GsonUtils.readValue(json, ArrearageDomain.class);
+        arrearageDomain.setIsSettle(0);
+        return new HttpResultPagination(arrearageDomain, arrearageService.summary(arrearageDomain));
     }
 }

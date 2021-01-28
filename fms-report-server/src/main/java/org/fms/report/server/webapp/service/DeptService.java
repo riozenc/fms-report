@@ -98,7 +98,7 @@ public class DeptService {
 
     public List<DeptDomain> getList(List<DeptDomain> list, List<DeptDomain> businessPlaceCodes) {
         businessPlaceCodes.addAll(list);
-        List<List<DeptDomain>> tree = list.stream().filter(i -> i.getChildren().size() > 0).map(DeptDomain::getChildren).collect(Collectors.toList());
+        List<List<DeptDomain>> tree = list.stream().filter(i -> (i.getChildren()!=null && i.getChildren().size() > 0)).map(DeptDomain::getChildren).collect(Collectors.toList());
         if (tree.size() > 0) {
             List<DeptDomain> child = new ArrayList<>();
             tree.forEach(child::addAll);

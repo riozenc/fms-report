@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.alibaba.fastjson.JSONObject;
 import com.riozenc.titanTool.spring.web.http.HttpResult;
+import com.riozenc.titanTool.spring.web.http.HttpResultPagination;
 
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
@@ -55,8 +56,8 @@ public class ChargeController {
 
     // 回收率pdf预览
     @ResponseBody
-    @RequestMapping(value = "/recRate")
-    public Object recRate(@RequestBody String json) throws JRException, IOException {
+    @RequestMapping(value = "/recRateToPDF")
+    public Object recRateToPDF(@RequestBody String json) throws JRException, IOException {
 
         ArrearageDomain arrearageDmoain = JSONObject.parseObject(json, ArrearageDomain.class);
 
@@ -137,6 +138,14 @@ public class ChargeController {
         } else {
             return new HttpResult(HttpResult.ERROR, "执行失败");
         }
+    }
+    
+    // 回收率查询
+    @ResponseBody
+    @RequestMapping(value = "/recRate")
+    public HttpResultPagination<?> recRate(@RequestBody String json) {
+        ArrearageDomain arrearageDmoain = JSONObject.parseObject(json, ArrearageDomain.class);
+        return new HttpResultPagination(arrearageDmoain,chargeService.recRate(arrearageDmoain));
     }
 
     // 收费汇总统计预览
