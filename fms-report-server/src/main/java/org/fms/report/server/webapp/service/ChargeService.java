@@ -101,12 +101,12 @@ public class ChargeService {
 
         TableDataBean tableData = new TableDataBean();
 
-        long yshs;
-        BigDecimal ysje;
-        long sshs;
-        BigDecimal ssje;
-        long qfhs;
-        BigDecimal qfje;
+        long yshs = 0;
+        BigDecimal ysje = BigDecimal.ZERO;
+        long sshs = 0;
+        BigDecimal ssje = BigDecimal.ZERO;
+        long qfhs = 0;
+        BigDecimal qfje = BigDecimal.ZERO;
 
         if ("year".equals(arrearageDomain.getGroupByDate())) {
             arrearageDomain.setStartMon(Integer.valueOf(arrearageDomain.getYear() + "01"));
@@ -117,8 +117,9 @@ public class ChargeService {
         arrearageDomain.setMons(integerMons);
 
         Integer mon = arrearageDomain.getStartMon();
-        if (arrearageDomain.getStartMon() <= 202007) {
-            mon = 202007;
+        Integer initmonth = Integer.valueOf(Global.getConfig("mon"));
+        if (arrearageDomain.getStartMon() <= initmonth) {
+            mon = initmonth;
         }
         WriteSectMongoDomain writeSectMongoDomain = new WriteSectMongoDomain();
         writeSectMongoDomain.setMon(mon);
@@ -239,23 +240,39 @@ public class ChargeService {
 
             tableData.setvName("营业区域");
             Long key = arrearageDomain.getBusinessPlaceCode();
-
-            //应收户数
-            yshs =
-                    arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode()) && a.getReceivable().compareTo(BigDecimal.ZERO) != 0).map(ArrearageDomain::getSettlementId).distinct().count();
-            //应收金额
-            ysje = arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode())).map(x -> x.getReceivable()).reduce(BigDecimal.ZERO, BigDecimal::add);
-
-               /* // 实收户数
+            
+            if(key==null) {
+            	for (Long code : arrearageDomain.getBusinessPlaceCodes()) {
+            		yshs +=
+                            arrearageBeanList.stream().filter(a -> code.equals(a.getBusinessPlaceCode()) && a.getReceivable().compareTo(BigDecimal.ZERO) != 0).map(ArrearageDomain::getSettlementId).distinct().count();
+                    //应收金额
+            		ysje = ysje.add( arrearageBeanList.stream().filter(a -> code.equals(a.getBusinessPlaceCode())).map(x -> x.getReceivable()).reduce(BigDecimal.ZERO, BigDecimal::add));
+                    
+                    qfhs += arrearageBeanList.stream().filter(a -> code.equals(a.getBusinessPlaceCode()) && Integer.valueOf(0).equals(a.getIsSettle())).map(ArrearageDomain::getSettlementId).distinct().count();
+//                  //欠费金额
+                    qfje = qfje.add( arrearageBeanList.stream().filter(a -> code.equals(a.getBusinessPlaceCode())).map(x -> x.getOweMoney() == null ? BigDecimal.ZERO : x.getOweMoney()).reduce(BigDecimal.ZERO, BigDecimal::add));
+				}
+            	
+            }else {
+            	//应收户数
+            	yshs =
+            			arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode()) && a.getReceivable().compareTo(BigDecimal.ZERO) != 0).map(ArrearageDomain::getSettlementId).distinct().count();
+            	//应收金额
+            	ysje = arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode())).map(x -> x.getReceivable()).reduce(BigDecimal.ZERO, BigDecimal::add);
+            	
+            	/* // 实收户数
                 sshs =
                         arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode()) && a.getReceivable().compareTo(BigDecimal.ZERO) != 0 && a.getOweMoney().compareTo(BigDecimal.ZERO) == 0).map(ArrearageDomain::getSettlementId).distinct().count();
                 //实收金额
                 ssje =
                         chargeInfoDomainList.stream().filter(a -> key.equals(a.getBusinessPlaceCode())).filter(t->t.getfChargeMode()!=6).map(x -> x.getFactMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
-               */ //欠费户数
-            qfhs = arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode()) && Integer.valueOf(0).equals(a.getIsSettle())).map(ArrearageDomain::getSettlementId).distinct().count();
+            	 */ //欠费户数
+            	qfhs = arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode()) && Integer.valueOf(0).equals(a.getIsSettle())).map(ArrearageDomain::getSettlementId).distinct().count();
 //            //欠费金额
-            qfje = arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode())).map(x -> x.getOweMoney() == null ? BigDecimal.ZERO : x.getOweMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
+            	qfje = arrearageBeanList.stream().filter(a -> key.equals(a.getBusinessPlaceCode())).map(x -> x.getOweMoney() == null ? BigDecimal.ZERO : x.getOweMoney()).reduce(BigDecimal.ZERO, BigDecimal::add);
+            	
+            }
+            
 
             sshs = yshs - qfhs;
             ssje = ysje.subtract(qfje);

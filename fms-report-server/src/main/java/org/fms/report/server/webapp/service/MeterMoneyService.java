@@ -160,7 +160,7 @@ public class MeterMoneyService {
             dept = deptService.getDept(arrearageDetailDomain.getBusinessPlaceCode());
             List<DeptDomain> deptList = deptService.getDeptList(arrearageDetailDomain.getBusinessPlaceCode());
             deptList.add(dept);
-            deptMap = deptList.stream().collect(Collectors.toMap(DeptDomain::getId, k -> k));
+            deptMap = deptList.stream().collect(Collectors.toMap(DeptDomain::getId, k -> k,(k1,k2)->k1));
             if (deptList.size() > 1) {
                 List<Long> businessPlaceCodes = deptList.stream().map(DeptDomain::getId).collect(Collectors.toList());
                 writeSect.setBusinessPlaceCodes(businessPlaceCodes);

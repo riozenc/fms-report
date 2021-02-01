@@ -3,6 +3,7 @@ package org.fms.report.server.webapp.controller;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ import com.riozenc.titanTool.common.date.DateUtil;
 import com.riozenc.titanTool.common.json.utils.GsonUtils;
 import com.riozenc.titanTool.properties.Global;
 import com.riozenc.titanTool.spring.web.http.HttpResult;
+import com.riozenc.titanTool.spring.web.http.HttpResultPagination;
 
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
@@ -45,6 +47,26 @@ public class MeterMoneyController {
     @ResponseBody
     @RequestMapping("meterMoneyDetailQuery")
     public Object meterMoneyDetailQuery(@RequestBody String json) throws IOException, JRException {
+    	ArrearageDetailDomain arrearageDetailDomain = GsonUtils.readValue(json, ArrearageDetailDomain.class);
+
+        if(arrearageDetailDomain.getStartMon()<Integer.valueOf(Global.getConfig("mon"))){
+            return new HttpResult(HttpResult.ERROR, Global.getConfig("mon")+
+                    "之前的月份请在老系统统计");
+        }
+        List<TableDataBean> tableDataList = meterMoneyService.select(arrearageDetailDomain);
+        arrearageDetailDomain.setTotalRow(tableDataList.size());
+        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+        Integer pageCurrent = arrearageDetailDomain.getPageCurrent();
+        Integer pageSize = arrearageDetailDomain.getPageSize();
+        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
+			tableData.add(tableDataList.get(i));
+		}
+        return new  HttpResultPagination(arrearageDetailDomain, tableData);
+    }
+    
+    @ResponseBody
+    @RequestMapping("meterMoneyDetailQueryShow")
+    public Object meterMoneyDetailQueryShow(@RequestBody String json) throws IOException, JRException {
         ArrearageDetailDomain arrearageDetailDomain = GsonUtils.readValue(json, ArrearageDetailDomain.class);
 
         if(arrearageDetailDomain.getStartMon()<Integer.valueOf(Global.getConfig("mon"))){

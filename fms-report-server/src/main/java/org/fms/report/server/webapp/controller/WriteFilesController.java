@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.HashMap;
 import java.util.List;
@@ -30,6 +31,7 @@ import com.alibaba.fastjson.JSONObject;
 import com.riozenc.titanTool.common.date.DateUtil;
 import com.riozenc.titanTool.common.json.utils.GsonUtils;
 import com.riozenc.titanTool.spring.web.http.HttpResult;
+import com.riozenc.titanTool.spring.web.http.HttpResultPagination;
 
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
@@ -340,6 +342,22 @@ public class WriteFilesController {
             return new HttpResult(HttpResult.ERROR, "执行失败");
         }
     }
+    
+ // 电量波动异常pdf预览
+    @ResponseBody
+    @RequestMapping(value = "/Power")
+    public Object power(@RequestBody String json) throws JRException, IOException {
+        WriteFilesDomain writeFiles = GsonUtils.readValue(json, WriteFilesDomain.class);
+        List<TableDataBean> tableDataList = writeFilesService.findWriteFiles(writeFiles);
+        writeFiles.setTotalRow(tableDataList.size());
+        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+        Integer pageCurrent = writeFiles.getPageCurrent();
+        Integer pageSize = writeFiles.getPageSize();
+        for (int i = pageCurrent-1*pageSize; i < Math.min(tableDataList.size()-1, pageCurrent*pageSize-1); i++) {
+			tableData.add(tableDataList.get(i));
+		}
+        return new HttpResultPagination(writeFiles,tableData );
+    }
 
     // 电量波动异常pdf预览
     @ResponseBody
@@ -438,6 +456,26 @@ public class WriteFilesController {
         }
     }
 
+    // 表吗查询
+    @ResponseBody
+    @RequestMapping(value = "/BmQuery")
+    public Object bmQuery(@RequestBody String json) throws JRException, IOException {
+        JSONObject jsonObject=JSONObject.parseObject(json);
+        Integer mon=jsonObject.getInteger("mon");
+        WriteFilesDomain writeFiles =
+                JSONObject.parseObject(jsonObject.getString("data"), WriteFilesDomain.class);
+        writeFiles.setMon(mon);
+        List<TableDataBean> tableDataList = writeFilesService.bmQueryShow(writeFiles);
+        //假分页
+        writeFiles.setTotalRow(tableDataList.size());
+        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+        Integer pageCurrent = writeFiles.getPageCurrent();
+        Integer pageSize = writeFiles.getPageSize();
+        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
+			tableData.add(tableDataList.get(i));
+		}
+        return new HttpResultPagination(writeFiles,tableDataList);
+    }
 
     // 表吗查询pdf预览
     @ResponseBody

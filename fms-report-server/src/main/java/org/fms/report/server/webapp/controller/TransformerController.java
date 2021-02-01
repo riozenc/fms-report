@@ -3,11 +3,13 @@ package org.fms.report.server.webapp.controller;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.ibatis.javassist.expr.NewArray;
 import org.apache.poi.util.IOUtils;
 import org.fms.report.common.util.FileUtil;
 import org.fms.report.common.webapp.bean.TableDataBean;
@@ -25,6 +27,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.riozenc.titanTool.common.date.DateUtil;
 import com.riozenc.titanTool.common.json.utils.GsonUtils;
 import com.riozenc.titanTool.spring.web.http.HttpResult;
+import com.riozenc.titanTool.spring.web.http.HttpResultPagination;
 
 import net.sf.jasperreports.engine.JRDataSource;
 import net.sf.jasperreports.engine.JRException;
@@ -130,5 +133,21 @@ public class TransformerController {
             return new HttpResult(HttpResult.ERROR, "执行失败");
         }
 
+    }
+    
+ // 台区抄表收费
+    @ResponseBody
+    @RequestMapping(value = "/WriteCharge")
+    public Object writeCharge(@RequestBody String json) throws IOException{
+        TransformerDomain transformer = GsonUtils.readValue(json, TransformerDomain.class);
+        List<TableDataBean> tableDataList = transformerService.writeCharge(transformer);
+        transformer.setTotalRow(tableDataList.size());
+        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+        Integer pageCurrent = transformer.getPageCurrent();
+        Integer pageSize = transformer.getPageSize();
+        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
+			tableData.add(tableDataList.get(i));
+		}
+        return new HttpResultPagination(transformer, tableDataList);
     }
 }

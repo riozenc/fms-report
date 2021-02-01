@@ -3,6 +3,7 @@ package org.fms.report.server.webapp.controller;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Date;
 import java.util.HashMap;
@@ -56,8 +57,8 @@ public class ChargeController {
 
     // 回收率pdf预览
     @ResponseBody
-    @RequestMapping(value = "/recRateToPDF")
-    public Object recRateToPDF(@RequestBody String json) throws JRException, IOException {
+    @RequestMapping(value = "/recRateShow")
+    public Object recRateShow(@RequestBody String json) throws JRException, IOException {
 
         ArrearageDomain arrearageDmoain = JSONObject.parseObject(json, ArrearageDomain.class);
 
@@ -140,18 +141,43 @@ public class ChargeController {
         }
     }
     
-    // 回收率查询
+    // 超级报表-回收率查询
     @ResponseBody
     @RequestMapping(value = "/recRate")
     public HttpResultPagination<?> recRate(@RequestBody String json) {
         ArrearageDomain arrearageDmoain = JSONObject.parseObject(json, ArrearageDomain.class);
-        return new HttpResultPagination(arrearageDmoain,chargeService.recRate(arrearageDmoain));
+        List<TableDataBean> tableDataList = chargeService.recRate(arrearageDmoain);
+        arrearageDmoain.setTotalRow(tableDataList.size());
+        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+        Integer pageCurrent = arrearageDmoain.getPageCurrent();
+        Integer pageSize = arrearageDmoain.getPageSize();
+        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
+			tableData.add(tableDataList.get(i));
+		}
+        return new HttpResultPagination(arrearageDmoain,tableData);
+    }
+    
+    //超级报表-收费汇总统计
+    @ResponseBody
+    @RequestMapping(value = "/chargeSummary")
+    public HttpResultPagination<?> chargeSummary(@RequestBody String json) throws JRException, IOException {
+
+        ChargeInfoDomain chargeInfoDomain = JSONObject.parseObject(json, ChargeInfoDomain.class);
+        List<TableDataBean> tableDataList = chargeService.feeRecStatistics(chargeInfoDomain);
+        chargeInfoDomain.setTotalRow(tableDataList.size());
+        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+        Integer pageCurrent = chargeInfoDomain.getPageCurrent();
+        Integer pageSize = chargeInfoDomain.getPageSize();
+        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
+			tableData.add(tableDataList.get(i));
+		}
+        return  new  HttpResultPagination(chargeInfoDomain,tableData);
     }
 
     // 收费汇总统计预览
     @ResponseBody
-    @RequestMapping(value = "/chargeSummary")
-    public Object chargeSummary(@RequestBody String json) throws JRException, IOException {
+    @RequestMapping(value = "/chargeSummaryShow")
+    public Object chargeSummaryShow(@RequestBody String json) throws JRException, IOException {
 
         ChargeInfoDomain chargeInfoDomain = JSONObject.parseObject(json, ChargeInfoDomain.class);
 
@@ -253,10 +279,28 @@ public class ChargeController {
     }
 
 
-    // 收费情况明细统计预览
+    // 超级报表-收费情况明细统计预览
     @ResponseBody
     @RequestMapping(value = "/chargeDetails")
-    public Object chargeDetails(@RequestBody String json) throws JRException, IOException {
+    public Object chargeDetails(@RequestBody String json) {
+
+        ChargeInfoDomain chargeInfoDomain = JSONObject.parseObject(json, ChargeInfoDomain.class);
+        List<TableDataBean> tableDataList = chargeService.chargeDetails(chargeInfoDomain);
+        chargeInfoDomain.setTotalRow(tableDataList.size());
+        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+        Integer pageCurrent = chargeInfoDomain.getPageCurrent();
+        Integer pageSize = chargeInfoDomain.getPageSize();
+        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
+			tableData.add(tableDataList.get(i));
+		}
+        
+        return new HttpResultPagination(chargeInfoDomain, tableDataList);
+    }
+    
+    // 收费情况明细统计预览
+    @ResponseBody
+    @RequestMapping(value = "/chargeDetailsShow")
+    public Object chargeDetailsShow(@RequestBody String json) throws JRException, IOException {
 
         ChargeInfoDomain chargeInfoDomain = JSONObject.parseObject(json, ChargeInfoDomain.class);
         String pdfFileName = json;

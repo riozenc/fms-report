@@ -5,6 +5,7 @@ import static java.util.stream.Collectors.toList;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Comparator;
 import java.util.Date;
@@ -16,6 +17,7 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.io.FileUtils;
 import org.apache.poi.util.IOUtils;
+import org.bouncycastle.jcajce.provider.symmetric.Serpent.TAlgParams;
 import org.fms.report.common.util.FileUtil;
 import org.fms.report.common.util.MonUtils;
 import org.fms.report.common.webapp.bean.TableDataBean;
@@ -423,6 +425,15 @@ public class ArrearageController {
             JRException {
         ArrearageDomain arrearageDomain = GsonUtils.readValue(json, ArrearageDomain.class);
         arrearageDomain.setIsSettle(0);
-        return new HttpResultPagination(arrearageDomain, arrearageService.summary(arrearageDomain));
+        List<TableDataBean> tableDataList = arrearageService.summary(arrearageDomain);
+        //假分页
+        arrearageDomain.setTotalRow(tableDataList.size());
+        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+        Integer pageCurrent = arrearageDomain.getPageCurrent();
+        Integer pageSize = arrearageDomain.getPageSize();
+        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
+			tableData.add(tableDataList.get(i));
+		}
+        return new HttpResultPagination(arrearageDomain, tableData);
     }
 }

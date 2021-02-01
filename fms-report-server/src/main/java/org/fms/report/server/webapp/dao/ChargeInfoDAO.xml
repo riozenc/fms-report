@@ -307,7 +307,7 @@ insert into CHARGE_INFO(ID,MON,SN,ARREARAGE_NO,METER_ID,DEDUCTION_BALANCE,ARREAR
         IFNULL(SUM(m.ADD_MONEY8),0)as addMoney8,
         IFNULL(SUM(m.ADD_MONEY9),0)as addMoney9,
         IFNULL(SUM(c.FACT_PUNISH),0)as factPunish,
-        IFNULL(SUM(c.FACT_PRE),0)as factPre,c.mon,
+        IFNULL(SUM(c.FACT_PRE),0)as factPre,c.MON,
         ( CASE F_CHARGE_MODE WHEN 5 THEN SUM( c.FACT_MONEY ) WHEN 6 THEN SUM(
         c.FACT_MONEY ) ELSE 0 end) AS reFactPre
         from CHARGE_INFO c
@@ -332,19 +332,19 @@ insert into CHARGE_INFO(ID,MON,SN,ARREARAGE_NO,METER_ID,DEDUCTION_BALANCE,ARREAR
             and c.pay_date &lt;= #{endDate}
         </if>
         <if test="groupBy !=null and groupBy=='dept'">
-            GROUP BY c.BUSINESS_PLACE_CODE
+            GROUP BY c.BUSINESS_PLACE_CODE,F_CHARGE_MODE
         </if>
         <if test="groupBy !=null and groupBy=='chargeMode'">
             GROUP BY c.F_CHARGE_MODE
         </if>
         <if test="groupBy !=null and groupBy=='operator'">
-            GROUP BY c.OPERATOR
+            GROUP BY c.OPERATOR,c.MON,c.F_CHARGE_MODE
         </if>
         <if test="groupBy !=null and groupBy=='mon'">
-            GROUP BY c.MON
+            GROUP BY c.MON,c.F_CHARGE_MODE
         </if>
         <if test="groupBy !=null and groupBy=='writeSectId'">
-            GROUP BY c.WRITE_SECT_ID
+            GROUP BY c.WRITE_SECT_ID,c.F_CHARGE_MODE
         </if>
 
 
