@@ -16,7 +16,9 @@ public class WriteFilesDomain extends ManagerParamEntity implements MybatisEntit
 
     private Long functionCode;//功能代码
 
-    private Long meterId;// 计量点ID
+    private Long meterId;// 计费点ID
+    
+    private Long mpedId; // 计量点ID
 
     private Byte phaseSeq;// 相序
 
@@ -40,6 +42,8 @@ public class WriteFilesDomain extends ManagerParamEntity implements MybatisEntit
     private Long meterAssetsId; // 电表资产ID
 
     private String meterNo; // 计量点号
+    
+    private String mpedNo;//计量点编号
 
     private Integer mon;// 月份
 
@@ -134,7 +138,18 @@ public class WriteFilesDomain extends ManagerParamEntity implements MybatisEntit
     private Long meterSn;
 
     private List<Long> meterAssetsIds;
-    public Long getMeterSn() {
+    
+    
+    
+    public Long getMpedId() {
+		return mpedId;
+	}
+
+	public void setMpedId(Long mpedId) {
+		this.mpedId = mpedId;
+	}
+
+	public Long getMeterSn() {
         return meterSn;
     }
 
@@ -631,4 +646,14 @@ public class WriteFilesDomain extends ManagerParamEntity implements MybatisEntit
     public void setMeterAssetsIds(List<Long> meterAssetsIds) {
         this.meterAssetsIds = meterAssetsIds;
     }
+
+	public String getMpedNo() {
+		return mpedNo;
+	}
+
+	public void setMpedNo(String mpedNo) {
+		this.mpedNo = mpedNo;
+	}
+    
+    
 }

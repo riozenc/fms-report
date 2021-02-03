@@ -46,7 +46,7 @@ public class FeeRecStatisticsBean implements MybatisEntity {
     BigDecimal price; //单价
     String settlementName;//结算户名
     Long settlementId;//结算户名
-    Long settlementNo;//结算户号
+    String settlementNo;//结算户号
     Integer ysTypeCode;//应收类型
     String ysTypeName;//应收类型
     String payDate;//支付时间
@@ -367,11 +367,11 @@ public class FeeRecStatisticsBean implements MybatisEntity {
         this.meterId = meterId;
     }
 
-    public Long getSettlementNo() {
+    public String getSettlementNo() {
         return settlementNo;
     }
 
-    public void setSettlementNo(Long settlementNo) {
+    public void setSettlementNo(String settlementNo) {
         this.settlementNo = settlementNo;
     }
 

@@ -64,7 +64,7 @@ public class FormatterUtil {
                 String value = null;
                 for (Map.Entry<Integer, Object> entry : map1.entrySet()) {
                     if ("key".equals(entry.getKey())) {
-                        key = (Integer) entry.getValue();
+                    	key = Integer.valueOf(entry.getValue().toString());
                     } else if ("value".equals(entry.getKey())) {
                         value = (String) entry.getValue();
                     }

@@ -36,7 +36,11 @@ public class WriteFilesBean  {
 
     private Long meterAssetsId; // 电表资产ID
 
-    private String meterNo; // 计量点号
+    private String meterNo; // 计费点号
+    
+    private Long mpedId;//计量点ID
+    
+    private String mpedNo;//计量点编号
 
     private Integer mon;// 月份
 
@@ -565,4 +569,22 @@ public class WriteFilesBean  {
     public void setTotalPower(BigDecimal totalPower) {
         this.totalPower = totalPower;
     }
+
+	public Long getMpedId() {
+		return mpedId;
+	}
+
+	public void setMpedId(Long mpedId) {
+		this.mpedId = mpedId;
+	}
+
+	public String getMpedNo() {
+		return mpedNo;
+	}
+
+	public void setMpedNo(String mpedNo) {
+		this.mpedNo = mpedNo;
+	}
+    
+    
 }
