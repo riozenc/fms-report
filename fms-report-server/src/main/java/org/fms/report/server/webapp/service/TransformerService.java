@@ -37,82 +37,74 @@ import net.sf.jasperreports.engine.data.JRBeanCollectionDataSource;
 
 @TransactionService
 public class TransformerService {
-    private Log logger = LogFactory.getLog(TransformerService.class);
+	private Log logger = LogFactory.getLog(TransformerService.class);
 
-    @Autowired
-    private MeterService meterService;
+	@Autowired
+	private MeterService meterService;
 
-    @Autowired
-    private TitanTemplate titanTemplate;
+	@Autowired
+	private TitanTemplate titanTemplate;
 
-    @TransactionDAO
-    private ChargeInfoDAO chargeInfoDAO;
+	@TransactionDAO
+	private ChargeInfoDAO chargeInfoDAO;
 
-    @Autowired
-    private MeterMoneyService meterMoneyService;
+	@Autowired
+	private MeterMoneyService meterMoneyService;
 
-    @Autowired
-    private UserService userService;
+	@Autowired
+	private UserService userService;
 
-    @Autowired
-    private DeptService deptService;
+	@Autowired
+	private DeptService deptService;
 
-    @Autowired
-    private WriteSectService writeSectService;
+	@Autowired
+	private WriteSectService writeSectService;
 
-    @Autowired
-    private ChargeService chargeService;
+	@Autowired
+	private ChargeService chargeService;
 
-    @Autowired
-    private BillingService billingService;
+	@Autowired
+	private BillingService billingService;
 
-    @Autowired
-    private TransformerMeterRelService transformerMeterRelService;
+	@Autowired
+	private TransformerMeterRelService transformerMeterRelService;
 
-    @TransactionDAO
-    private DeptDAO deptDAO;
+	@TransactionDAO
+	private DeptDAO deptDAO;
 
-    @TransactionDAO
-    private ArrearageDAO arrearageDAO;
+	@TransactionDAO
+	private ArrearageDAO arrearageDAO;
 
-    @Autowired
-    private CimService cimService;
+	@Autowired
+	private CimService cimService;
 
+	public List<TransformerDomain> getTransformer(TransformerDomain transformer) {
+		HttpHeaders httpHeaders = new HttpHeaders();
+		httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+		List<TransformerDomain> list = new ArrayList<>();
+		try {
+			list = titanTemplate.post("BILLING-SERVER", "billingServer/transformer/getTransformer", httpHeaders,
+					GsonUtils.toJson(transformer), new TypeReference<List<TransformerDomain>>() {
+					});
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return list;
+	}
 
-
-    public List<TransformerDomain> getTransformer(TransformerDomain transformer) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        List<TransformerDomain> list = new ArrayList<>();
-        try {
-            list = titanTemplate.post("BILLING-SERVER",
-                    "billingServer/transformer/getTransformer", httpHeaders,
-                    GsonUtils.toJson(transformer),
-                    new TypeReference<List<TransformerDomain>>() {
-                    });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return list;
-    }
-
-    public List<TransformerMeterRelDomain> getTransMeterRel(TransformerMeterRelDomain transMeterRel) {
-        HttpHeaders httpHeaders = new HttpHeaders();
-        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
-        List<TransformerMeterRelDomain> transMeterRelList = new ArrayList<>();
-        try {
-            transMeterRelList = titanTemplate.post("BILLING-SERVER",
-                    "billingServer/transMeterRel/getTransMeterRel", httpHeaders,
-                    GsonUtils.toJson(transMeterRel),
-                    new TypeReference<List<TransformerMeterRelDomain>>() {
-                    });
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-        return transMeterRelList;
-    }
-
-
+	public List<TransformerMeterRelDomain> getTransMeterRel(TransformerMeterRelDomain transMeterRel) {
+		HttpHeaders httpHeaders = new HttpHeaders();
+		httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+		List<TransformerMeterRelDomain> transMeterRelList = new ArrayList<>();
+		try {
+			transMeterRelList = titanTemplate.post("BILLING-SERVER", "billingServer/transMeterRel/getTransMeterRel",
+					httpHeaders, GsonUtils.toJson(transMeterRel), new TypeReference<List<TransformerMeterRelDomain>>() {
+					});
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return transMeterRelList;
+	}
 
 //    public List<TableDataBean> writeCharge(TransformerDomain transformer) throws IOException {
 //        DeptDomain deptDomain = null;
@@ -560,309 +552,380 @@ public class TransformerService {
 //        return tableDataList;
 //
 //    }
-    public List<TableDataBean> writeCharge(TransformerDomain transformer) throws IOException {
-        TableDataBean tableData = new TableDataBean();
-        MeterMoneyDomain meterMoneyDomain=new MeterMoneyDomain();
-        meterMoneyDomain.setMon(transformer.getMon());
-        if(transformer.getBusinessPlaceCode()!=null&&transformer.getBusinessPlaceCode()!=0){
-            WriteSectMongoDomain writeSectMongoDomain=
-                    new WriteSectMongoDomain();
-            writeSectMongoDomain.setMon(transformer.getMon());
-            writeSectMongoDomain.setBusinessPlaceCode(transformer.getBusinessPlaceCode());
-            writeSectMongoDomain.setPageSize(-1);
-            List<WriteSectMongoDomain> writeSectMongoDomains=
-                    billingService.getMongoWriteSect(writeSectMongoDomain);
-            List<Long> writeSectionIds=
-                    writeSectMongoDomains.stream().map(WriteSectMongoDomain::getId).distinct().collect(Collectors.toList());
-            meterMoneyDomain.setWriteSectIds(writeSectionIds);
-            tableData.setvName("营业区域");
-            tableData.setvValue(transformer.getBusinessPlaceName());
-        }else if(transformer.getWritorId()!=null&&transformer.getWritorId()!=0){
-            //根据抄表员获取抄表段
-            WriteSectDomain writeSectDomain=new WriteSectDomain();
-            writeSectDomain.setMon(transformer.getMon());
-            writeSectDomain.setWritorId(transformer.getWritorId());
-            List<WriteSectDomain> writeSectDomainList=writeSectService.getWriteSect(writeSectDomain);
-            List<Long> writeSectIdList=writeSectDomainList.stream().map(WriteSectDomain::getId).collect(Collectors.toList());
-            meterMoneyDomain.setWriteSectIds(writeSectIdList);
-            tableData.setvName("抄表员");
-            tableData.setvValue(transformer.getWritorName());
-        }
+	public List<TableDataBean> writeCharge(TransformerDomain transformer) throws IOException {
+		TableDataBean tableData = new TableDataBean();
+		MeterMoneyDomain meterMoneyDomain = new MeterMoneyDomain();
+		meterMoneyDomain.setMon(transformer.getMon());
+		if (transformer.getBusinessPlaceCode() != null && transformer.getBusinessPlaceCode() != 0) {
+			WriteSectMongoDomain writeSectMongoDomain = new WriteSectMongoDomain();
+			writeSectMongoDomain.setMon(transformer.getMon());
+			writeSectMongoDomain.setBusinessPlaceCode(transformer.getBusinessPlaceCode());
+			writeSectMongoDomain.setPageSize(-1);
+			List<WriteSectMongoDomain> writeSectMongoDomains = billingService.getMongoWriteSect(writeSectMongoDomain);
+			List<Long> writeSectionIds = writeSectMongoDomains.stream().map(WriteSectMongoDomain::getId).distinct()
+					.collect(Collectors.toList());
+			meterMoneyDomain.setWriteSectIds(writeSectionIds);
+			tableData.setvName("营业区域");
+			tableData.setvValue(transformer.getBusinessPlaceName());
+		} else if (transformer.getWritorId() != null && transformer.getWritorId() != 0) {
+			// 根据抄表员获取抄表段
+			WriteSectDomain writeSectDomain = new WriteSectDomain();
+			writeSectDomain.setMon(transformer.getMon());
+			writeSectDomain.setWritorId(transformer.getWritorId());
+			List<WriteSectDomain> writeSectDomainList = writeSectService.getWriteSect(writeSectDomain);
+			List<Long> writeSectIdList = writeSectDomainList.stream().map(WriteSectDomain::getId)
+					.collect(Collectors.toList());
+			meterMoneyDomain.setWriteSectIds(writeSectIdList);
+			tableData.setvName("抄表员");
+			tableData.setvValue(transformer.getWritorName());
+		}
 
-        //METER_MONEY列表
-        meterMoneyDomain.setPageSize(-1);
-        List<MeterMoneyDomain> meterMoneyDomainList=
-                billingService.mongoFind(meterMoneyDomain);
-        List<Long> meterIdList=
-                meterMoneyDomainList.stream().map(MeterMoneyDomain::getMeterId).distinct().collect(Collectors.toList());
+		// METER_MONEY列表
+		meterMoneyDomain.setPageSize(-1);
+		List<MeterMoneyDomain> meterMoneyDomainList = billingService.mongoFind(meterMoneyDomain);
+		List<Long> meterIdList = meterMoneyDomainList.stream().map(MeterMoneyDomain::getMeterId).distinct()
+				.collect(Collectors.toList());
 
-        ChargeInfoDomain chargeInfoDomain=new ChargeInfoDomain();
-        chargeInfoDomain.setMon(transformer.getMon());
-        chargeInfoDomain.setMeterIds(meterIdList);
-        List<ChargeInfoDomain> chargeInfoDomainList=billingService.chargeFindByWhere(chargeInfoDomain);
+		ChargeInfoDomain chargeInfoDomain = new ChargeInfoDomain();
+		chargeInfoDomain.setMon(transformer.getMon());
+		chargeInfoDomain.setMeterIds(meterIdList);
+		List<ChargeInfoDomain> chargeInfoDomainList = billingService.chargeFindByWhere(chargeInfoDomain);
 
-        //收费记录MAP
-        Map<Long,List<ChargeInfoDomain>> chargeInfoDomainMap=chargeInfoDomainList.stream().collect(Collectors.groupingBy(ChargeInfoDomain::getMeterId));
+		// 收费记录MAP
+		Map<Long, List<ChargeInfoDomain>> chargeInfoDomainMap = chargeInfoDomainList.stream()
+				.collect(Collectors.groupingBy(ChargeInfoDomain::getMeterId));
 
-        //变压器计量点关系
-        List<TransformerMeterRelDomain> transformerMeterRelDomainList=new ArrayList<>();
+		// 变压器计量点关系
+		List<TransformerMeterRelDomain> transformerMeterRelDomainList = new ArrayList<>();
 
-        //获取计量点与线路关系
-        int len = meterIdList.size();
+		// 获取计量点与线路关系
+		int len = meterIdList.size();
 
-        //无电费记录 预收之类
-        if (len != 0) {
-            for (int m = 0; m < len / 4999 + 1; m++) {// 遍历次数
+		// 无电费记录 预收之类
+		if (len != 0) {
+			for (int m = 0; m < len / 4999 + 1; m++) {// 遍历次数
 
-                List<Long> tl = meterIdList.subList(m * 4999,
-                        (m + 1) * 4999 > len ? len : (m + 1) * 4999);
+				List<Long> tl = meterIdList.subList(m * 4999, (m + 1) * 4999 > len ? len : (m + 1) * 4999);
 
-                TransformerMeterRelDomain transformerMeterRelDomain=new TransformerMeterRelDomain();
-                transformerMeterRelDomain.setMon(transformer.getMon());
-                transformerMeterRelDomain.setMeterIds(tl);
-                transformerMeterRelDomainList.addAll(transformerMeterRelService.getTransMeterRel(transformerMeterRelDomain));
-            }
-        }
+				TransformerMeterRelDomain transformerMeterRelDomain = new TransformerMeterRelDomain();
+				transformerMeterRelDomain.setMon(transformer.getMon());
+				transformerMeterRelDomain.setMeterIds(tl);
+				transformerMeterRelDomainList
+						.addAll(transformerMeterRelService.getTransMeterRel(transformerMeterRelDomain));
+			}
+		}
 
-        //变压器计量点关系MAP
-        Map<Long,TransformerMeterRelDomain> transformerMeterRelDomainMap=
-                transformerMeterRelDomainList.stream().collect(Collectors.toMap(TransformerMeterRelDomain::getMeterId, k -> k,(k1,k2)->k1));
+		// 变压器计量点关系MAP
+		Map<Long, TransformerMeterRelDomain> transformerMeterRelDomainMap = transformerMeterRelDomainList.stream()
+				.collect(Collectors.toMap(TransformerMeterRelDomain::getMeterId, k -> k, (k1, k2) -> k1));
 
-        //变压器信息
-        List<Long> transformerIds=
-                transformerMeterRelDomainList.stream().map(TransformerMeterRelDomain::getTransformerId).distinct().collect(Collectors.toList());
-        TransformerDomain transformerDomain=new TransformerDomain();
-        transformerDomain.setMon(transformer.getMon());
-        transformerDomain.setIds(transformerIds);
-        List<TransformerDomain> transformerDomainList=getTransformer(transformerDomain);
-        //变压器Map
-        Map<Long,TransformerDomain>transformerDomainMap=transformerDomainList.stream().collect(Collectors.toMap(TransformerDomain::getId, k -> k));
+		// 变压器信息
+		List<Long> transformerIds = transformerMeterRelDomainList.stream()
+				.map(TransformerMeterRelDomain::getTransformerId).distinct().collect(Collectors.toList());
+		TransformerDomain transformerDomain = new TransformerDomain();
+		transformerDomain.setMon(transformer.getMon());
+		transformerDomain.setIds(transformerIds);
+		List<TransformerDomain> transformerDomainList = getTransformer(transformerDomain);
+		// 变压器Map
+		Map<Long, TransformerDomain> transformerDomainMap = transformerDomainList.stream()
+				.collect(Collectors.toMap(TransformerDomain::getId, k -> k));
 
-        for (MeterMoneyDomain metermoneyDomain : meterMoneyDomainList) {
+		for (MeterMoneyDomain metermoneyDomain : meterMoneyDomainList) {
 
-            if(transformerMeterRelDomainMap.get(metermoneyDomain.getMeterId())==null){
-                metermoneyDomain.setTransFormerId((long)0);
-                metermoneyDomain.setTransformerName(null);
-                metermoneyDomain.setCapacity(null);
-                metermoneyDomain.setIsPubType(null);
+			if (transformerMeterRelDomainMap.get(metermoneyDomain.getMeterId()) == null) {
+				metermoneyDomain.setTransFormerId((long) 0);
+				metermoneyDomain.setTransformerName(null);
+				metermoneyDomain.setCapacity(null);
+				metermoneyDomain.setIsPubType(null);
 
-            }else{
-                metermoneyDomain.setTransFormerId(transformerDomainMap.get(transformerMeterRelDomainMap.get(metermoneyDomain.getMeterId()).getTransformerId()).getId());
-                metermoneyDomain.setTransformerName(transformerDomainMap.get(transformerMeterRelDomainMap.get(metermoneyDomain.getMeterId()).getTransformerId()).getDeskName());
-                metermoneyDomain.setCapacity(transformerDomainMap.get(transformerMeterRelDomainMap.get(metermoneyDomain.getMeterId()).getTransformerId()).getCapacity());
-                metermoneyDomain.setIsPubType(transformerDomainMap.get(transformerMeterRelDomainMap.get(metermoneyDomain.getMeterId()).getTransformerId()).getIsPubType());
+			} else {
+				metermoneyDomain.setTransFormerId(transformerDomainMap
+						.get(transformerMeterRelDomainMap.get(metermoneyDomain.getMeterId()).getTransformerId())
+						.getId());
+				metermoneyDomain.setTransformerName(transformerDomainMap
+						.get(transformerMeterRelDomainMap.get(metermoneyDomain.getMeterId()).getTransformerId())
+						.getDeskName());
+				metermoneyDomain.setCapacity(transformerDomainMap
+						.get(transformerMeterRelDomainMap.get(metermoneyDomain.getMeterId()).getTransformerId())
+						.getCapacity());
+				metermoneyDomain.setIsPubType(transformerDomainMap
+						.get(transformerMeterRelDomainMap.get(metermoneyDomain.getMeterId()).getTransformerId())
+						.getIsPubType());
 
-            }
+			}
 
-            if(chargeInfoDomainMap.get(metermoneyDomain.getMeterId())==null){
-                metermoneyDomain.setFactMoney(BigDecimal.ZERO);
-                metermoneyDomain.setFactPunish(BigDecimal.ZERO);
+			if (chargeInfoDomainMap.get(metermoneyDomain.getMeterId()) == null) {
+				metermoneyDomain.setFactMoney(BigDecimal.ZERO);
+				metermoneyDomain.setFactPunish(BigDecimal.ZERO);
 
-            }else{
-                metermoneyDomain.setFactMoney(chargeInfoDomainMap.get(metermoneyDomain.getMeterId()).stream().map(ChargeInfoDomain::getFactMoney).reduce(BigDecimal.ZERO,BigDecimal::add));
-                metermoneyDomain.setFactPunish(chargeInfoDomainMap.get(metermoneyDomain.getMeterId()).stream().map(ChargeInfoDomain::getFactPunish).reduce(BigDecimal.ZERO,BigDecimal::add));
+			} else {
+				metermoneyDomain.setFactMoney(chargeInfoDomainMap.get(metermoneyDomain.getMeterId()).stream()
+						.map(ChargeInfoDomain::getFactMoney).reduce(BigDecimal.ZERO, BigDecimal::add));
+				metermoneyDomain.setFactPunish(chargeInfoDomainMap.get(metermoneyDomain.getMeterId()).stream()
+						.map(ChargeInfoDomain::getFactPunish).reduce(BigDecimal.ZERO, BigDecimal::add));
 
-            }
+			}
 
-        }
+		}
 
-        List<Long> notransformerNameMeterIds=
-                meterMoneyDomainList.stream().filter(t->t.getMeterId()!=null).filter(t->t.getTransformerName()==null).map(MeterMoneyDomain::getMeterId).distinct().collect(Collectors.toList());
-        //专变无变压器名称用户名
-        if(notransformerNameMeterIds!=null && notransformerNameMeterIds.size()>0){
-            MeterDomain m = new MeterDomain();
-            m.setMon(transformer.getMon());
-            m.setIds(notransformerNameMeterIds);
-            List<MeterDomain> meterDomains=meterService.getMeter(m);
+		List<Long> notransformerNameMeterIds = meterMoneyDomainList.stream().filter(t -> t.getMeterId() != null)
+				.filter(t -> t.getTransformerName() == null).map(MeterMoneyDomain::getMeterId).distinct()
+				.collect(Collectors.toList());
+		// 专变无变压器名称用户名
+		if (notransformerNameMeterIds != null && notransformerNameMeterIds.size() > 0) {
+			MeterDomain m = new MeterDomain();
+			m.setMon(transformer.getMon());
+			m.setIds(notransformerNameMeterIds);
+			List<MeterDomain> meterDomains = meterService.getMeter(m);
 
-            String nolinString=
-                    meterDomains.stream().map(MeterDomain::getId).map(String::valueOf).collect(Collectors.joining(","));
-            logger.info((transformer.getBusinessPlaceCode()==null?"":transformer.getBusinessPlaceCode())+"无台区用户计量点======" +nolinString);
+			String nolinString = meterDomains.stream().map(MeterDomain::getId).map(String::valueOf)
+					.collect(Collectors.joining(","));
+			logger.info((transformer.getBusinessPlaceCode() == null ? "" : transformer.getBusinessPlaceCode())
+					+ "无台区用户计量点======" + nolinString);
 
-            Map<Long, String> meterMap=
-                    meterDomains.stream().collect(Collectors.toMap(MeterDomain::getId, k -> k.getUserName(),(k1, k2) -> k1));
-            meterMoneyDomainList.stream().filter(t->notransformerNameMeterIds.contains(t.getMeterId())).forEach(t->{
-                t.setTransformerName(meterMap.get(t.getMeterId()));
-            });
+			Map<Long, String> meterMap = meterDomains.stream()
+					.collect(Collectors.toMap(MeterDomain::getId, k -> k.getUserName(), (k1, k2) -> k1));
+			meterMoneyDomainList.stream().filter(t -> notransformerNameMeterIds.contains(t.getMeterId())).forEach(t -> {
+				t.setTransformerName(meterMap.get(t.getMeterId()));
+			});
 
+		}
 
-        }
+		Map<Long, List<MeterMoneyDomain>> transformerListMap = meterMoneyDomainList.stream()
+				.collect(Collectors.groupingBy(MeterMoneyDomain::getTransFormerId));
 
-        Map<Long,List<MeterMoneyDomain>> transformerListMap= meterMoneyDomainList.stream().collect(Collectors.groupingBy(MeterMoneyDomain::getTransFormerId));
+		// 变压器线路关系
+		TransformerLineRelDomain transformerLineRelDomain = new TransformerLineRelDomain();
+		transformerLineRelDomain.setTransformIds(transformerIds);
+		List<TransformerLineRelDomain> transformerLineRelDomains = cimService
+				.findRelByTranformIds(transformerLineRelDomain);
 
-        //变压器线路关系
-        TransformerLineRelDomain transformerLineRelDomain=
-                new TransformerLineRelDomain();
-        transformerLineRelDomain.setTransformIds(transformerIds);
-        List<TransformerLineRelDomain> transformerLineRelDomains=
-                cimService.findRelByTranformIds(transformerLineRelDomain);
+		Map<Long, TransformerLineRelDomain> transformerLineRelDomainMap = transformerLineRelDomains.stream()
+				.collect(Collectors.toMap(TransformerLineRelDomain::getTransformerId, a -> a, (k1, k2) -> k1));
 
-        Map<Long,TransformerLineRelDomain> transformerLineRelDomainMap=
-                transformerLineRelDomains.stream().collect(Collectors.toMap(TransformerLineRelDomain::getTransformerId, a -> a, (k1, k2) -> k1));
+		List<FeeRecStatisticsBean> resultList = new ArrayList();
+		FeeRecStatisticsBean noTransBean = new FeeRecStatisticsBean();
+		noTransBean.initFeeRecStatisticsBean(noTransBean);
+		FeeRecStatisticsBean gbBean = new FeeRecStatisticsBean();
+		gbBean.initFeeRecStatisticsBean(gbBean);
+		FeeRecStatisticsBean zbBean = new FeeRecStatisticsBean();
+		zbBean.initFeeRecStatisticsBean(zbBean);
+		FeeRecStatisticsBean totalBean = new FeeRecStatisticsBean();
+		totalBean.initFeeRecStatisticsBean(totalBean);
+		// 按变压器遍历
+		for (Map.Entry<Long, List<MeterMoneyDomain>> entryDomain : transformerListMap.entrySet()) {
+			Long key = entryDomain.getKey();
+			List<MeterMoneyDomain> entryDomainList = entryDomain.getValue();
+			entryDomainList = entryDomainList.stream().sorted(
+					Comparator.comparing(MeterMoneyDomain::getCapacity, Comparator.nullsLast(BigDecimal::compareTo)))
+					.collect(Collectors.toList());
+			int count = 1;
+			FeeRecStatisticsBean feeRecStatisticsBean = new FeeRecStatisticsBean();
+			feeRecStatisticsBean.initFeeRecStatisticsBean(feeRecStatisticsBean);
+			// 遍历某变压器下所有计量点
+			for (MeterMoneyDomain moneyDomain : entryDomainList) {
+				if (moneyDomain.getTransFormerId() != 0) {
+					assignment(transformerLineRelDomainMap, feeRecStatisticsBean, moneyDomain, count);
+					//专用变标志为null的暂定为公变合计
+					if (null != moneyDomain.getIsPubType() && 1 != moneyDomain.getIsPubType()) {
+						assignment(transformerLineRelDomainMap, zbBean, moneyDomain, count);
+					} else {
+						assignment(transformerLineRelDomainMap, gbBean, moneyDomain, count);
 
-        List<FeeRecStatisticsBean> resultList=new ArrayList();
-        FeeRecStatisticsBean noTransBean=new FeeRecStatisticsBean();
-        noTransBean.initFeeRecStatisticsBean(noTransBean);
-        FeeRecStatisticsBean gbBean=new FeeRecStatisticsBean();
-        gbBean.initFeeRecStatisticsBean(gbBean);
-        FeeRecStatisticsBean zbBean=new FeeRecStatisticsBean();
-        zbBean.initFeeRecStatisticsBean(zbBean);
-        FeeRecStatisticsBean totalBean=new FeeRecStatisticsBean();
-        totalBean.initFeeRecStatisticsBean(totalBean);
-        //按变压器遍历
-        for (Map.Entry<Long, List<MeterMoneyDomain>> entryDomain : transformerListMap.entrySet()) {
-            Long key = entryDomain.getKey();
-            List<MeterMoneyDomain> entryDomainList = entryDomain.getValue();
-            entryDomainList=entryDomainList.stream().sorted(Comparator
-                    .comparing(MeterMoneyDomain::getCapacity,
-                            Comparator.nullsLast(BigDecimal::compareTo))).collect(Collectors.toList());
-            int count=1;
-            FeeRecStatisticsBean feeRecStatisticsBean=new FeeRecStatisticsBean();
-            feeRecStatisticsBean.initFeeRecStatisticsBean(feeRecStatisticsBean);
-            //遍历某变压器下所有计量点
-            for (MeterMoneyDomain moneyDomain : entryDomainList) {
-                if(moneyDomain.getTransFormerId()!=0){
-                    assignment(transformerLineRelDomainMap,feeRecStatisticsBean,moneyDomain,count);
-                    if(null!=moneyDomain.getIsPubType()){
-                        if(1==moneyDomain.getIsPubType()){
-                            assignment(transformerLineRelDomainMap,gbBean,moneyDomain,count);
-                        }else{
-                            assignment(transformerLineRelDomainMap,zbBean, moneyDomain,count);
-                        }
-                    }
-                }else{
-                    //System.out.println("meterId============"+moneyDomain
-                    // .getMeterId());
-                    assignment(transformerLineRelDomainMap,noTransBean, moneyDomain,count);
-                }
-                assignment(transformerLineRelDomainMap,totalBean,moneyDomain,count);
-                count++;
-            }
+					}
+				} else {
+					// System.out.println("meterId============"+moneyDomain
+					// .getMeterId());
+					assignment(transformerLineRelDomainMap, noTransBean, moneyDomain, count);
+				}
+				assignment(transformerLineRelDomainMap, totalBean, moneyDomain, count);
+				count++;
+			}
 
-            //列表中不显示空台区
-            if(feeRecStatisticsBean.getTransFormerId()!=null&&feeRecStatisticsBean.getTransFormerId()!=0){
-                //没维护考核电价时供电量=售电量
-                if(feeRecStatisticsBean.getPowerSupply().compareTo(BigDecimal.ZERO)==0){
-                    feeRecStatisticsBean.setPowerSupply(feeRecStatisticsBean.getElectricitySales());
-                }
-                resultList.add(feeRecStatisticsBean);
-            }
+			// 列表中不显示空台区
+			if (feeRecStatisticsBean.getTransFormerId() != null && feeRecStatisticsBean.getTransFormerId() != 0) {
+				// 没维护考核电价时供电量=售电量
+				if (feeRecStatisticsBean.getPowerSupply().compareTo(BigDecimal.ZERO) == 0) {
+					feeRecStatisticsBean.setPowerSupply(feeRecStatisticsBean.getElectricitySales());
+				}
+				resultList.add(feeRecStatisticsBean);
+			}
 
-        }
+		}
 
-        //上一步才完成所有台区的供电量数据，所以在这里进行供电量汇总
-        gbBean.setPowerSupply(BigDecimal.ZERO);
-        zbBean.setPowerSupply(BigDecimal.ZERO);
-        totalBean.setPowerSupply(BigDecimal.ZERO);
-        resultList.forEach(r->{
+		// 上一步才完成所有台区的供电量数据，所以在这里进行供电量汇总
+		gbBean.setPowerSupply(BigDecimal.ZERO);
+		zbBean.setPowerSupply(BigDecimal.ZERO);
+		totalBean.setPowerSupply(BigDecimal.ZERO);
+		resultList.forEach(r ->
 
-                if(1==r.getIsPubType()){
-                    gbBean.setPowerSupply(gbBean.getPowerSupply().add(r.getPowerSupply()));
-                }else{
-                    zbBean.setPowerSupply(zbBean.getPowerSupply().add(r.getPowerSupply()));
-                }
-            totalBean.setPowerSupply(totalBean.getPowerSupply().add(r.getPowerSupply()));
-        });
+		{
 
-        resultList=
-                resultList.stream().sorted(Comparator.comparing(FeeRecStatisticsBean::getLineId, Comparator.nullsFirst(Long::compareTo))
-                        .thenComparing(FeeRecStatisticsBean::getIsPubType, Comparator.nullsFirst(Byte::compareTo)))
-                .collect(Collectors.toList());
-        //无台区客户供电量直接取售电量
-        noTransBean.setPowerSupply(noTransBean.getElectricitySales());
-        noTransBean.setTransformerName("无台区客户");
-        if(noTransBean.getPowerSupply().intValue() != 0){
-            noTransBean.setLineLossRate((noTransBean.getPowerSupply().subtract(noTransBean.getElectricitySales())).divide(noTransBean.getPowerSupply(),4, BigDecimal.ROUND_HALF_UP));
-        }
-        if(noTransBean.getReceivable().intValue() != 0){
+			if (1 == r.getIsPubType()) {
+				gbBean.setPowerSupply(gbBean.getPowerSupply().add(r.getPowerSupply()));
+			} else {
+				zbBean.setPowerSupply(zbBean.getPowerSupply().add(r.getPowerSupply()));
+			}
+			totalBean.setPowerSupply(totalBean.getPowerSupply().add(r.getPowerSupply()));
+		});
 
-            noTransBean.setRecoveryRate(noTransBean.getFactMoney().divide(noTransBean.getReceivable(),4, BigDecimal.ROUND_HALF_UP));
-        }
-        resultList.add(noTransBean);
-        gbBean.setTransformerName("公变合计");
-        if(gbBean.getPowerSupply().intValue() != 0){
-            gbBean.setLineLossRate((gbBean.getPowerSupply().subtract(gbBean.getElectricitySales())).divide(gbBean.getPowerSupply(),4, BigDecimal.ROUND_HALF_UP));
-        }
-        if(gbBean.getReceivable().intValue() != 0){
+		resultList = resultList.stream()
+				.sorted(Comparator.comparing(FeeRecStatisticsBean::getLineId, Comparator.nullsFirst(Long::compareTo))
+						.thenComparing(FeeRecStatisticsBean::getIsPubType, Comparator.nullsFirst(Byte::compareTo)))
+				.collect(Collectors.toList());
+		// 无台区客户供电量直接取售电量
+		noTransBean.setPowerSupply(noTransBean.getElectricitySales());
+		noTransBean.setTransformerName("无台区客户");
+		if (noTransBean.getPowerSupply().intValue() != 0) {
+			noTransBean.setLineLossRate((noTransBean.getPowerSupply().subtract(noTransBean.getElectricitySales()))
+					.divide(noTransBean.getPowerSupply(), 4, BigDecimal.ROUND_HALF_UP));
+		}
+		if (noTransBean.getReceivable().intValue() != 0) {
 
-            gbBean.setRecoveryRate(gbBean.getFactMoney().divide(gbBean.getReceivable(),4, BigDecimal.ROUND_HALF_UP));
-        }
-        resultList.add(gbBean);
-        zbBean.setTransformerName("专变合计");
-        if(zbBean.getPowerSupply().intValue() != 0){
-            zbBean.setLineLossRate((zbBean.getPowerSupply().subtract(zbBean.getElectricitySales())).divide(zbBean.getPowerSupply(),4, BigDecimal.ROUND_HALF_UP));
-        }
-        if(zbBean.getReceivable().intValue() != 0){
+			noTransBean.setRecoveryRate(
+					noTransBean.getFactMoney().divide(noTransBean.getReceivable(), 4, BigDecimal.ROUND_HALF_UP));
+		}
+		resultList.add(noTransBean);
+		gbBean.setTransformerName("公变合计");
+		if (gbBean.getPowerSupply().intValue() != 0) {
+			gbBean.setLineLossRate((gbBean.getPowerSupply().subtract(gbBean.getElectricitySales()))
+					.divide(gbBean.getPowerSupply(), 4, BigDecimal.ROUND_HALF_UP));
+		}
+		if (gbBean.getReceivable().intValue() != 0) {
 
-            zbBean.setRecoveryRate(zbBean.getFactMoney().divide(zbBean.getReceivable(),4, BigDecimal.ROUND_HALF_UP));
-        }
-        resultList.add(zbBean);
-        totalBean.setTransformerName("总合计");
-        if(totalBean.getPowerSupply().intValue() != 0){
-            totalBean.setLineLossRate((totalBean.getPowerSupply().subtract(totalBean.getElectricitySales())).divide(totalBean.getPowerSupply(),4, BigDecimal.ROUND_HALF_UP));
-        }
-        if(totalBean.getReceivable().intValue() != 0){
+			gbBean.setRecoveryRate(gbBean.getFactMoney().divide(gbBean.getReceivable(), 4, BigDecimal.ROUND_HALF_UP));
+		}
+		resultList.add(gbBean);
+		zbBean.setTransformerName("专变合计");
+		if (zbBean.getPowerSupply().intValue() != 0) {
+			zbBean.setLineLossRate((zbBean.getPowerSupply().subtract(zbBean.getElectricitySales()))
+					.divide(zbBean.getPowerSupply(), 4, BigDecimal.ROUND_HALF_UP));
+		}
+		if (zbBean.getReceivable().intValue() != 0) {
 
-            totalBean.setRecoveryRate(totalBean.getFactMoney().divide(totalBean.getReceivable(),4, BigDecimal.ROUND_HALF_UP));
-        }
-        resultList.add(totalBean);
+			zbBean.setRecoveryRate(zbBean.getFactMoney().divide(zbBean.getReceivable(), 4, BigDecimal.ROUND_HALF_UP));
+		}
+		resultList.add(zbBean);
+		totalBean.setTransformerName("总合计");
+		if (totalBean.getPowerSupply().intValue() != 0) {
+			totalBean.setLineLossRate((totalBean.getPowerSupply().subtract(totalBean.getElectricitySales()))
+					.divide(totalBean.getPowerSupply(), 4, BigDecimal.ROUND_HALF_UP));
+		}
+		if (totalBean.getReceivable().intValue() != 0) {
 
+			totalBean.setRecoveryRate(
+					totalBean.getFactMoney().divide(totalBean.getReceivable(), 4, BigDecimal.ROUND_HALF_UP));
+		}
+		resultList.add(totalBean);
 
-        List<TableDataBean> tableDataList = new ArrayList<>();
-        tableData.setTableData(new JRBeanCollectionDataSource(resultList));
-        tableData.setMon(transformer.getMon());
+		List<TableDataBean> tableDataList = new ArrayList<>();
+		tableData.setTableData(new JRBeanCollectionDataSource(resultList));
+		tableData.setMon(transformer.getMon());
 
-        tableDataList.add(tableData);
-        return tableDataList;
-    }
+		tableDataList.add(tableData);
+		return tableDataList;
+	}
 
-    public void assignment(Map<Long,TransformerLineRelDomain> transformerLineRelDomainMap,FeeRecStatisticsBean feeRecStatisticsBean,MeterMoneyDomain moneyDomain,int count){
-        //展示
-        TransformerLineRelDomain transformerLineRelDomain=
-                transformerLineRelDomainMap.get(moneyDomain.getTransFormerId());
-        if (transformerLineRelDomain!=null){
-            feeRecStatisticsBean.setLineId(transformerLineRelDomain.getLineId());
-            if(moneyDomain.getTransformerName()==null){
-                logger.info("无变压器名称计量点========"+moneyDomain.getMeterId());
-            }
-            feeRecStatisticsBean.setTransformerName(moneyDomain.getTransformerName()==null?"无变压器名称/"+transformerLineRelDomain.getLineName():moneyDomain.getTransformerName()+"/"+transformerLineRelDomain.getLineName());
-        }else{
-            feeRecStatisticsBean.setTransformerName(moneyDomain.getTransformerName()==null?"":moneyDomain.getTransformerName());
-        }
-        if(count==1){
-            feeRecStatisticsBean.setCapacity(moneyDomain.getCapacity()==null?BigDecimal.ZERO:feeRecStatisticsBean.getCapacity().add(moneyDomain.getCapacity()));
-        }
-        if(moneyDomain.getPriceTypeId()==101){
-            feeRecStatisticsBean.setPowerSupply(moneyDomain.getTransformerName()==null?BigDecimal.ZERO:feeRecStatisticsBean.getPowerSupply().add(moneyDomain.getTotalPower()));
-        }else{
-            feeRecStatisticsBean.setElectricitySales(feeRecStatisticsBean.getElectricitySales()==null?BigDecimal.ZERO:feeRecStatisticsBean.getElectricitySales().add(moneyDomain.getTotalPower()));
-        }
-        feeRecStatisticsBean.setReceivable(feeRecStatisticsBean.getReceivable()==null?BigDecimal.ZERO:feeRecStatisticsBean.getReceivable().add(moneyDomain.getAmount()));
-        feeRecStatisticsBean.setFactMoney(feeRecStatisticsBean.getFactMoney()==null?BigDecimal.ZERO:feeRecStatisticsBean.getFactMoney().add(moneyDomain.getFactMoney()));
-        feeRecStatisticsBean.setAddMoney1(feeRecStatisticsBean.getAddMoney1()==null?BigDecimal.ZERO:feeRecStatisticsBean.getAddMoney1().add(moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "2" + "#" + "0")==null?BigDecimal.ZERO:moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "2" + "#" + "0")));
-        feeRecStatisticsBean.setAddMoney2(feeRecStatisticsBean.getAddMoney2()==null?BigDecimal.ZERO:feeRecStatisticsBean.getAddMoney2().add(moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "3" + "#" + "0")==null?BigDecimal.ZERO:moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "3" + "#" + "0")));
-        feeRecStatisticsBean.setAddMoney3(feeRecStatisticsBean.getAddMoney3()==null?BigDecimal.ZERO:feeRecStatisticsBean.getAddMoney3().add(moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "4" + "#" + "0")==null?BigDecimal.ZERO:moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "4" + "#" + "0")));
-        feeRecStatisticsBean.setAddMoney4(feeRecStatisticsBean.getAddMoney4()==null?BigDecimal.ZERO:feeRecStatisticsBean.getAddMoney4().add(moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "5" + "#" + "0")==null?BigDecimal.ZERO:moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "5" + "#" + "0")));
-        feeRecStatisticsBean.setAddMoney5(feeRecStatisticsBean.getAddMoney5()==null?BigDecimal.ZERO:feeRecStatisticsBean.getAddMoney5().add(moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "6" + "#" + "0")==null?BigDecimal.ZERO:moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "6" + "#" + "0")));
-        feeRecStatisticsBean.setAddMoney6(feeRecStatisticsBean.getAddMoney6()==null?BigDecimal.ZERO:feeRecStatisticsBean.getAddMoney6().add(moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "7" + "#" + "0")==null?BigDecimal.ZERO:moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "7" + "#" + "0")));
-        feeRecStatisticsBean.setAddMoney7(feeRecStatisticsBean.getAddMoney7()==null?BigDecimal.ZERO:feeRecStatisticsBean.getAddMoney7().add(moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "8" + "#" + "0")==null?BigDecimal.ZERO:moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "8" + "#" + "0")));
-        feeRecStatisticsBean.setAddMoney8(feeRecStatisticsBean.getAddMoney8()==null?BigDecimal.ZERO:feeRecStatisticsBean.getAddMoney8().add(moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "9" + "#" + "0")==null?BigDecimal.ZERO:moneyDomain.getSurchargeDetail().get(moneyDomain.getPriceTypeId() + "#" + "9" + "#" + "0")));
+	public void assignment(Map<Long, TransformerLineRelDomain> transformerLineRelDomainMap,
+			FeeRecStatisticsBean feeRecStatisticsBean, MeterMoneyDomain moneyDomain, int count) {
+		// 展示
+		TransformerLineRelDomain transformerLineRelDomain = transformerLineRelDomainMap
+				.get(moneyDomain.getTransFormerId());
+		if (transformerLineRelDomain != null) {
+			feeRecStatisticsBean.setLineId(transformerLineRelDomain.getLineId());
+			if (moneyDomain.getTransformerName() == null) {
+				logger.info("无变压器名称计量点========" + moneyDomain.getMeterId());
+			}
+			feeRecStatisticsBean.setTransformerName(
+					moneyDomain.getTransformerName() == null ? "无变压器名称/" + transformerLineRelDomain.getLineName()
+							: moneyDomain.getTransformerName() + "/" + transformerLineRelDomain.getLineName());
+		} else {
+			feeRecStatisticsBean.setTransformerName(
+					moneyDomain.getTransformerName() == null ? "" : moneyDomain.getTransformerName());
+		}
+		if (count == 1) {
+			feeRecStatisticsBean.setCapacity(moneyDomain.getCapacity() == null ? BigDecimal.ZERO
+					: feeRecStatisticsBean.getCapacity().add(moneyDomain.getCapacity()));
+		}
+		if (moneyDomain.getPriceTypeId() == 101) {
+			feeRecStatisticsBean.setPowerSupply(moneyDomain.getTransformerName() == null ? BigDecimal.ZERO
+					: feeRecStatisticsBean.getPowerSupply().add(moneyDomain.getTotalPower()));
+		} else {
+			feeRecStatisticsBean
+					.setElectricitySales(feeRecStatisticsBean.getElectricitySales() == null ? BigDecimal.ZERO
+							: feeRecStatisticsBean.getElectricitySales().add(moneyDomain.getTotalPower()));
+		}
+		feeRecStatisticsBean.setReceivable(feeRecStatisticsBean.getReceivable() == null ? BigDecimal.ZERO
+				: feeRecStatisticsBean.getReceivable().add(moneyDomain.getAmount()));
+		feeRecStatisticsBean.setFactMoney(feeRecStatisticsBean.getFactMoney() == null ? BigDecimal.ZERO
+				: feeRecStatisticsBean.getFactMoney().add(moneyDomain.getFactMoney()));
+		feeRecStatisticsBean.setAddMoney1(feeRecStatisticsBean.getAddMoney1() == null ? BigDecimal.ZERO
+				: feeRecStatisticsBean.getAddMoney1()
+						.add(moneyDomain.getSurchargeDetail()
+								.get(moneyDomain.getPriceTypeId() + "#" + "2" + "#" + "0") == null ? BigDecimal.ZERO
+										: moneyDomain.getSurchargeDetail()
+												.get(moneyDomain.getPriceTypeId() + "#" + "2" + "#" + "0")));
+		feeRecStatisticsBean.setAddMoney2(feeRecStatisticsBean.getAddMoney2() == null ? BigDecimal.ZERO
+				: feeRecStatisticsBean.getAddMoney2()
+						.add(moneyDomain.getSurchargeDetail()
+								.get(moneyDomain.getPriceTypeId() + "#" + "3" + "#" + "0") == null ? BigDecimal.ZERO
+										: moneyDomain.getSurchargeDetail()
+												.get(moneyDomain.getPriceTypeId() + "#" + "3" + "#" + "0")));
+		feeRecStatisticsBean.setAddMoney3(feeRecStatisticsBean.getAddMoney3() == null ? BigDecimal.ZERO
+				: feeRecStatisticsBean.getAddMoney3()
+						.add(moneyDomain.getSurchargeDetail()
+								.get(moneyDomain.getPriceTypeId() + "#" + "4" + "#" + "0") == null ? BigDecimal.ZERO
+										: moneyDomain.getSurchargeDetail()
+												.get(moneyDomain.getPriceTypeId() + "#" + "4" + "#" + "0")));
+		feeRecStatisticsBean.setAddMoney4(feeRecStatisticsBean.getAddMoney4() == null ? BigDecimal.ZERO
+				: feeRecStatisticsBean.getAddMoney4()
+						.add(moneyDomain.getSurchargeDetail()
+								.get(moneyDomain.getPriceTypeId() + "#" + "5" + "#" + "0") == null ? BigDecimal.ZERO
+										: moneyDomain.getSurchargeDetail()
+												.get(moneyDomain.getPriceTypeId() + "#" + "5" + "#" + "0")));
+		feeRecStatisticsBean.setAddMoney5(feeRecStatisticsBean.getAddMoney5() == null ? BigDecimal.ZERO
+				: feeRecStatisticsBean.getAddMoney5()
+						.add(moneyDomain.getSurchargeDetail()
+								.get(moneyDomain.getPriceTypeId() + "#" + "6" + "#" + "0") == null ? BigDecimal.ZERO
+										: moneyDomain.getSurchargeDetail()
+												.get(moneyDomain.getPriceTypeId() + "#" + "6" + "#" + "0")));
+		feeRecStatisticsBean.setAddMoney6(feeRecStatisticsBean.getAddMoney6() == null ? BigDecimal.ZERO
+				: feeRecStatisticsBean.getAddMoney6()
+						.add(moneyDomain.getSurchargeDetail()
+								.get(moneyDomain.getPriceTypeId() + "#" + "7" + "#" + "0") == null ? BigDecimal.ZERO
+										: moneyDomain.getSurchargeDetail()
+												.get(moneyDomain.getPriceTypeId() + "#" + "7" + "#" + "0")));
+		feeRecStatisticsBean.setAddMoney7(feeRecStatisticsBean.getAddMoney7() == null ? BigDecimal.ZERO
+				: feeRecStatisticsBean.getAddMoney7()
+						.add(moneyDomain.getSurchargeDetail()
+								.get(moneyDomain.getPriceTypeId() + "#" + "8" + "#" + "0") == null ? BigDecimal.ZERO
+										: moneyDomain.getSurchargeDetail()
+												.get(moneyDomain.getPriceTypeId() + "#" + "8" + "#" + "0")));
+		feeRecStatisticsBean.setAddMoney8(feeRecStatisticsBean.getAddMoney8() == null ? BigDecimal.ZERO
+				: feeRecStatisticsBean.getAddMoney8()
+						.add(moneyDomain.getSurchargeDetail()
+								.get(moneyDomain.getPriceTypeId() + "#" + "9" + "#" + "0") == null ? BigDecimal.ZERO
+										: moneyDomain.getSurchargeDetail()
+												.get(moneyDomain.getPriceTypeId() + "#" + "9" + "#" + "0")));
 
-        feeRecStatisticsBean.setVolumeCharge(feeRecStatisticsBean.getVolumeCharge()==null?BigDecimal.ZERO:feeRecStatisticsBean.getVolumeCharge().add(moneyDomain.getVolumeCharge()));
-        feeRecStatisticsBean.setFactPunish(feeRecStatisticsBean.getFactPunish()==null?BigDecimal.ZERO:feeRecStatisticsBean.getFactPunish().add(moneyDomain.getFactPunish()));
-        if(feeRecStatisticsBean.getPowerSupply().intValue() != 0){
-            feeRecStatisticsBean.setLineLossRate((feeRecStatisticsBean.getPowerSupply().subtract(feeRecStatisticsBean.getElectricitySales())).divide(feeRecStatisticsBean.getPowerSupply(),4, BigDecimal.ROUND_HALF_UP));
-        }
-        if(feeRecStatisticsBean.getReceivable().intValue() != 0){
+		feeRecStatisticsBean.setVolumeCharge(feeRecStatisticsBean.getVolumeCharge() == null ? BigDecimal.ZERO
+				: feeRecStatisticsBean.getVolumeCharge().add(moneyDomain.getVolumeCharge()));
+		feeRecStatisticsBean.setFactPunish(feeRecStatisticsBean.getFactPunish() == null ? BigDecimal.ZERO
+				: feeRecStatisticsBean.getFactPunish().add(moneyDomain.getFactPunish()));
+		if (feeRecStatisticsBean.getPowerSupply().intValue() != 0) {
+			feeRecStatisticsBean.setLineLossRate(
+					(feeRecStatisticsBean.getPowerSupply().subtract(feeRecStatisticsBean.getElectricitySales()))
+							.divide(feeRecStatisticsBean.getPowerSupply(), 4, BigDecimal.ROUND_HALF_UP));
+		}
+		if (feeRecStatisticsBean.getReceivable().intValue() != 0) {
 
-            feeRecStatisticsBean.setRecoveryRate(feeRecStatisticsBean.getFactMoney().divide(feeRecStatisticsBean.getReceivable(),4, BigDecimal.ROUND_HALF_UP));
-        }
+			feeRecStatisticsBean.setRecoveryRate(feeRecStatisticsBean.getFactMoney()
+					.divide(feeRecStatisticsBean.getReceivable(), 4, BigDecimal.ROUND_HALF_UP));
+		}
 
-        //不展示
-        feeRecStatisticsBean.setIsPubType(moneyDomain.getIsPubType());
-        feeRecStatisticsBean.setTransFormerId(moneyDomain.getTransFormerId());
-    }
-
-
+		// 不展示
+		feeRecStatisticsBean.setIsPubType(moneyDomain.getIsPubType());
+		feeRecStatisticsBean.setTransFormerId(moneyDomain.getTransFormerId());
+	}
 
 }

@@ -516,7 +516,7 @@ public class ChargeService {
         chargeInfoDetailEntities.forEach(t -> {
             FeeRecStatisticsBean feeRecStatisticsBean =
                     new FeeRecStatisticsBean();
-            feeRecStatisticsBean.setSettlementNo(Long.valueOf(t.getSettlementNo()));
+            feeRecStatisticsBean.setSettlementNo(t.getSettlementNo());
             feeRecStatisticsBean.setSettlementName(t.getSettlementName());
             feeRecStatisticsBean.setMon(t.getMon());
             feeRecStatisticsBean.setYsTypeName(ysTypeCodeMap.get(Long.valueOf(t.getYsTypeCode())));

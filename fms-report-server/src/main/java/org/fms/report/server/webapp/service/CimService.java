@@ -12,7 +12,9 @@ import org.fms.report.common.webapp.domain.LineDomain;
 import org.fms.report.common.webapp.domain.MeterAssetsDomain;
 import org.fms.report.common.webapp.domain.MeterDomain;
 import org.fms.report.common.webapp.domain.MeterMeterAssetsRelDomain;
+import org.fms.report.common.webapp.domain.MeterMpedRelDomain;
 import org.fms.report.common.webapp.domain.MeterRelationDomain;
+import org.fms.report.common.webapp.domain.PMpedDomain;
 import org.fms.report.common.webapp.domain.SettlementDomain;
 import org.fms.report.common.webapp.domain.SettlementMeterRelDomain;
 import org.fms.report.common.webapp.domain.SfPowerBankDomain;
@@ -509,6 +511,44 @@ public class CimService {
                     httpHeaders,
                     GsonUtils.toJson(meterRelationDomain),
                     new TypeReference<HttpResultPagination<MeterRelationDomain>>() {
+                    });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return httpResultPagination.getList();
+    }
+    
+    //计量点计费点关系
+    public List<MeterMpedRelDomain> findMeterMpedRelByWhere(MeterMpedRelDomain meterMpedRelDomain) {
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpResultPagination<MeterMpedRelDomain> httpResultPagination = null;
+        try {
+            httpResultPagination = titanTemplate.post("CIM-SERVER",
+                    "cimServer/meterMpedRel?method=getMeterMpedRel",
+                    httpHeaders,
+                    GsonUtils.toJson(meterMpedRelDomain),
+                    new TypeReference<HttpResultPagination<MeterMpedRelDomain>>() {
+                    });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return httpResultPagination.getList();
+    }
+    
+    //计量点
+    public List<PMpedDomain> findMpedByWhere(PMpedDomain pMpedDomain) {
+
+        HttpHeaders httpHeaders = new HttpHeaders();
+        httpHeaders.setContentType(MediaType.APPLICATION_JSON);
+        HttpResultPagination<PMpedDomain> httpResultPagination = null;
+        try {
+            httpResultPagination = titanTemplate.post("CIM-SERVER",
+                    "cimServer/pmped?method=getPmped",
+                    httpHeaders,
+                    GsonUtils.toJson(pMpedDomain),
+                    new TypeReference<HttpResultPagination<PMpedDomain>>() {
                     });
         } catch (Exception e) {
             e.printStackTrace();

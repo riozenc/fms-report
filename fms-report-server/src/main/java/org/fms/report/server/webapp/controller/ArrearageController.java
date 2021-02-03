@@ -424,15 +424,18 @@ public class ArrearageController {
     public HttpResultPagination<?> summary(@RequestBody String json) throws IOException,
             JRException {
         ArrearageDomain arrearageDomain = GsonUtils.readValue(json, ArrearageDomain.class);
+        Integer pageCurrent = arrearageDomain.getPageCurrent();
+        Integer pageSize = arrearageDomain.getPageSize();
         arrearageDomain.setIsSettle(0);
+        arrearageDomain.setPageSize(-1);
         List<TableDataBean> tableDataList = arrearageService.summary(arrearageDomain);
         //假分页
         arrearageDomain.setTotalRow(tableDataList.size());
         List<TableDataBean> tableData = new ArrayList<TableDataBean>();
-        Integer pageCurrent = arrearageDomain.getPageCurrent();
-        Integer pageSize = arrearageDomain.getPageSize();
         for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
-			tableData.add(tableDataList.get(i));
+        	if (tableDataList.get(i).getTableData().getData().size()>0) {
+        		tableData.add(tableDataList.get(i));
+			}
 		}
         return new HttpResultPagination(arrearageDomain, tableData);
     }

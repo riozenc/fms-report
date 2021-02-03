@@ -146,11 +146,12 @@ public class ChargeController {
     @RequestMapping(value = "/recRate")
     public HttpResultPagination<?> recRate(@RequestBody String json) {
         ArrearageDomain arrearageDmoain = JSONObject.parseObject(json, ArrearageDomain.class);
-        List<TableDataBean> tableDataList = chargeService.recRate(arrearageDmoain);
-        arrearageDmoain.setTotalRow(tableDataList.size());
-        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
         Integer pageCurrent = arrearageDmoain.getPageCurrent();
         Integer pageSize = arrearageDmoain.getPageSize();
+        List<TableDataBean> tableDataList = chargeService.recRate(arrearageDmoain);
+        arrearageDmoain.setTotalRow(tableDataList.size());
+        arrearageDmoain.setPageSize(-1);
+        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
         for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
 			tableData.add(tableDataList.get(i));
 		}
