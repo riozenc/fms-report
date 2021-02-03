@@ -14,6 +14,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.poi.util.IOUtils;
 import org.fms.report.common.util.FileUtil;
 import org.fms.report.common.webapp.bean.TableDataBean;
+import org.fms.report.common.webapp.bean.WriteFilesBean;
 import org.fms.report.common.webapp.domain.MeterDomain;
 import org.fms.report.common.webapp.domain.WriteFilesDomain;
 import org.fms.report.server.utils.JasperHelper;
@@ -464,17 +465,31 @@ public class WriteFilesController {
         Integer mon=jsonObject.getInteger("mon");
         WriteFilesDomain writeFiles =
                 JSONObject.parseObject(jsonObject.getString("data"), WriteFilesDomain.class);
-        writeFiles.setMon(mon);
-        List<TableDataBean> tableDataList = writeFilesService.bmQueryShow(writeFiles);
-        //假分页
-        writeFiles.setTotalRow(tableDataList.size());
-        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
         Integer pageCurrent = writeFiles.getPageCurrent();
         Integer pageSize = writeFiles.getPageSize();
-        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
-			tableData.add(tableDataList.get(i));
+        Integer totalRow = 0;
+        writeFiles.setMon(mon);
+        writeFiles.setPageSize(-1);
+        List<TableDataBean> tableDataList = writeFilesService.bmQueryShow(writeFiles);
+        //假分页
+        List<TableDataBean> tableDatas = new ArrayList<TableDataBean>();
+        List<WriteFilesBean> writeFilesBeans=new ArrayList<WriteFilesBean>();
+        TableDataBean tableData = new TableDataBean();
+        if (tableDataList !=null && tableDataList.size()>0) {
+        	totalRow = tableDataList.get(0).getTableData().getData().size();
+        	List<WriteFilesBean> writeFilesBeans1=(List<WriteFilesBean>) tableDataList.get(0).getTableData().getData();
+        	for (int i = (pageCurrent-1)*pageSize; i < Math.min(totalRow, pageCurrent*pageSize); i++) {
+        		System.out.println(i);
+        		writeFilesBeans.add(writeFilesBeans1.get(i));
+//        		tableDatas.add(tableDataList.get(i));
+        	}
+			
 		}
-        return new HttpResultPagination(writeFiles,tableDataList);
+        System.out.println("totalRow:"+totalRow);
+        writeFiles.setTotalRow(totalRow);
+        tableData.setTableData(new JRBeanCollectionDataSource(writeFilesBeans));
+        tableDatas.add(tableData);
+        return new HttpResultPagination(writeFiles,tableDatas);
     }
 
     // 表吗查询pdf预览

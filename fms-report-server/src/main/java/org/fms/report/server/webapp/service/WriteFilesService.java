@@ -24,6 +24,8 @@ import org.fms.report.common.webapp.domain.MeterAssetsDomain;
 import org.fms.report.common.webapp.domain.MeterDomain;
 import org.fms.report.common.webapp.domain.MeterMeterAssetsRelDomain;
 import org.fms.report.common.webapp.domain.MeterMoneyDomain;
+import org.fms.report.common.webapp.domain.MeterMpedRelDomain;
+import org.fms.report.common.webapp.domain.PMpedDomain;
 import org.fms.report.common.webapp.domain.PriceExecutionDomain;
 import org.fms.report.common.webapp.domain.SettlementDomain;
 import org.fms.report.common.webapp.domain.SettlementMeterRelDomain;
@@ -35,6 +37,7 @@ import org.fms.report.common.webapp.domain.WriteSectDomain;
 import org.fms.report.server.webapp.dao.UserDAO;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import com.alibaba.druid.sql.visitor.functions.Nil;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.riozenc.titanTool.annotation.TransactionDAO;
 import com.riozenc.titanTool.annotation.TransactionService;
@@ -452,33 +455,50 @@ public class WriteFilesService {
         Map<Long,WriteSectDomain> writeSectDomainMap=
                 writeSectDomains.stream().collect(Collectors.toMap(WriteSectDomain::getId, a -> a, (k1, k2) -> k1));
 
-        //获取计量点
+        //获取计费点
         List<Long> meterIds=
                 writeFilesDomains.stream().filter(t->t.getMeterId()!=null)
                         .map(WriteFilesDomain::getMeterId).distinct().collect(Collectors.toList());
 
         //获取资产号
-        List<Long> meterAssetsIds=
-                writeFilesDomains.stream().filter(t->t.getMeterAssetsId()!=null)
-                .map(WriteFilesDomain::getMeterAssetsId).distinct().collect(Collectors.toList());
+//        List<Long> meterAssetsIds=
+//                writeFilesDomains.stream().filter(t->t.getMeterAssetsId()!=null)
+//                .map(WriteFilesDomain::getMeterAssetsId).distinct().collect(Collectors.toList());
+        
+        //获取计量点
+//        List<Long> mpedIds = 
+//        		writeFilesDomains.stream().filter(t->t.getMpedId()!=null)
+//        		.map(WriteFilesDomain::getMpedId).distinct().collect(Collectors.toList());
 
-        Map<String,List<Long>> paramMap=new HashMap<>();
-        paramMap.put("ids",meterAssetsIds);
-        List<MeterAssetsDomain> meterAssetsDomains=
-                cimService.getMeterAssetsByAssetsIds(paramMap);
-        Map<Long,MeterAssetsDomain> meterAssetsDomainMap=meterAssetsDomains.stream()
-                .collect(Collectors.toMap(o -> o.getId(), a -> a,(k1, k2) -> k1));
+        MeterMpedRelDomain meterMpedRelParamDomain = new MeterMpedRelDomain();
+        meterMpedRelParamDomain.setPageSize(-1);
+        meterMpedRelParamDomain.setMeterIds(meterIds);
+        //
+        List<MeterMpedRelDomain> meterMpedRelDomains = cimService.findMeterMpedRelByWhere(meterMpedRelParamDomain);
+        
+        Map<String,MeterMpedRelDomain> meterMpedRelDomainMap=
+        		meterMpedRelDomains.stream().collect(Collectors.toMap(o -> o.getMeterId() + "_" + o.getMpedId()+"_"+o.getFunctionCode(), a -> a, (k1, k2) -> k1));
+        
+        PMpedDomain pMpedParamDomain = new PMpedDomain();
+        pMpedParamDomain.setMpedIds(meterMpedRelDomains.stream().map(MeterMpedRelDomain::getMpedId).collect(Collectors.toList()));
+        List<PMpedDomain> pMpedDomains = cimService.findMpedByWhere(pMpedParamDomain);
+        Map<Long, PMpedDomain> pmpedMap = pMpedDomains.stream().collect(Collectors.toMap(o -> o.getId(), a -> a, (k1, k2) -> k1));
+        
+//        List<MeterAssetsDomain> meterAssetsDomains=
+//                cimService.getMeterAssetsByAssetsIds(paramMap);
+//        Map<Long,MeterAssetsDomain> meterAssetsDomainMap=meterAssetsDomains.stream()
+//                .collect(Collectors.toMap(o -> o.getId(), a -> a,(k1, k2) -> k1));
         //获取计量点和表计关系
         //表序号
-        MeterMeterAssetsRelDomain parammeterMeterAssetsRelDomain =
-                new MeterMeterAssetsRelDomain();
-        parammeterMeterAssetsRelDomain.setMeterAssetsIds(meterAssetsIds);
-        parammeterMeterAssetsRelDomain.setPageSize(-1);
-        List<MeterMeterAssetsRelDomain> meterMeterAssetsRelDomains =
-                cimService.findMeterMeterAssetsRelByWhere(parammeterMeterAssetsRelDomain);
+//        MeterMeterAssetsRelDomain parammeterMeterAssetsRelDomain =
+//                new MeterMeterAssetsRelDomain();
+//        parammeterMeterAssetsRelDomain.setMeterAssetsIds(meterAssetsIds);
+//        parammeterMeterAssetsRelDomain.setPageSize(-1);
+//        List<MeterMeterAssetsRelDomain> meterMeterAssetsRelDomains =
+//                cimService.findMeterMeterAssetsRelByWhere(parammeterMeterAssetsRelDomain);
 
-        Map<String,MeterMeterAssetsRelDomain> meterMeterAssetsRelDomainMap=
-                meterMeterAssetsRelDomains.stream().collect(Collectors.toMap(o -> o.getMeterId() + "_" + o.getMeterAssetsId()+"_"+o.getFunctionCode(), a -> a, (k1, k2) -> k1));
+//        Map<String,MeterMeterAssetsRelDomain> meterMeterAssetsRelDomainMap=
+//                meterMeterAssetsRelDomains.stream().collect(Collectors.toMap(o -> o.getMeterId() + "_" + o.getMeterAssetsId()+"_"+o.getFunctionCode(), a -> a, (k1, k2) -> k1));
 
         MeterMoneyDomain meterMoney = new MeterMoneyDomain();
         meterMoney.setMon(writeFilesDomain.getMon());
@@ -508,19 +528,32 @@ public class WriteFilesService {
                 a.setWriteSectNo(writeSectDomainMap.get(a.getWriteSectionId()).getWriteSectNo());
                 a.setWriteSectName(writeSectDomainMap.get(a.getWriteSectionId()).getWriteSectName());
             }
-
-            //表序号
+            //
             String key =
-                    a.getMeterId()+"_"+a.getMeterAssetsId()+"_"+a.getFunctionCode();
+                    a.getMeterId()+"_"+a.getMpedId()+"_"+a.getFunctionCode();
+            
+            MeterMpedRelDomain meterMpedRelDomain = meterMpedRelDomainMap.get(key);
+            
+            if (meterMpedRelDomain !=null) {
+            	a.setWriteSn(meterMpedRelDomain.getWriteSn());
+            	a.setMpedId(meterMpedRelDomain.getMpedId());
+            	PMpedDomain pMpedDomain = pmpedMap.get(meterMpedRelDomain.getMpedId());
+            	a.setMpedNo(pMpedDomain==null?null:pMpedDomain.getCode());
+			}
+            
+            
+            //表序号
+//            String key =
+//                    a.getMeterId()+"_"+a.getMeterAssetsId()+"_"+a.getFunctionCode();
 
-            MeterMeterAssetsRelDomain meterMeterAssetsRelDomain=
-                                  meterMeterAssetsRelDomainMap.get(key);
+//            MeterMeterAssetsRelDomain meterMeterAssetsRelDomain=
+//                                  meterMeterAssetsRelDomainMap.get(key);
 
 
-            if(meterMeterAssetsRelDomain!=null){
-                a.setMeterOrder(meterMeterAssetsRelDomain.getMeterOrder());
-                a.setWriteSn(meterMeterAssetsRelDomain.getWriteSn());
-            }
+//            if(meterMeterAssetsRelDomain!=null){
+//                a.setMeterOrder(meterMeterAssetsRelDomain.getMeterOrder());
+//                a.setWriteSn(meterMeterAssetsRelDomain.getWriteSn());
+//            }
 
             MeterMoneyDomain meterMoneyDomain=
                     meterMoneyDomainMap.get(a.getMeterId());
@@ -529,11 +562,11 @@ public class WriteFilesService {
                 a.setChgPower(meterMoneyDomain.getChgPower());
             }
 
-            MeterAssetsDomain meterAssetsDomain=
-                    meterAssetsDomainMap.get(a.getMeterAssetsId());
-            if(meterAssetsDomain!=null){
-                a.setMeterAssetsNo(meterAssetsDomain.getMeterAssetsNo());
-            }
+//            MeterAssetsDomain meterAssetsDomain=
+//                    meterAssetsDomainMap.get(a.getMeterAssetsId());
+//            if(meterAssetsDomain!=null){
+//                a.setMeterAssetsNo(meterAssetsDomain.getMeterAssetsNo());
+//            }
 
         });
 
@@ -553,6 +586,8 @@ public class WriteFilesService {
             writeFilesBean.setChgPower(t.getChgPower());
             writeFilesBean.setWriteSectNo(t.getWriteSectNo());
             writeFilesBean.setWriteDate(t.getLastWriteDate());
+            writeFilesBean.setMpedId(t.getMpedId());
+            writeFilesBean.setMpedNo(t.getMpedNo());
             writeFilesBeans.add(writeFilesBean);
         };
 
