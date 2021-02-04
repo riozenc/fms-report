@@ -16,6 +16,7 @@ import org.apache.poi.util.IOUtils;
 import org.fms.report.common.util.FileUtil;
 import org.fms.report.common.util.FormatterUtil;
 import org.fms.report.common.util.MonUtils;
+import org.fms.report.common.webapp.bean.FeeRecStatisticsBean;
 import org.fms.report.common.webapp.bean.TableDataBean;
 import org.fms.report.common.webapp.domain.ArrearageDomain;
 import org.fms.report.common.webapp.domain.ChargeInfoDomain;
@@ -327,16 +328,42 @@ public class ChargeController {
     public Object chargeDetails(@RequestBody String json) {
 
         ChargeInfoDomain chargeInfoDomain = JSONObject.parseObject(json, ChargeInfoDomain.class);
-        List<TableDataBean> tableDataList = chargeService.chargeDetails(chargeInfoDomain);
-        chargeInfoDomain.setTotalRow(tableDataList.size());
-        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+        //qq
         Integer pageCurrent = chargeInfoDomain.getPageCurrent();
         Integer pageSize = chargeInfoDomain.getPageSize();
-        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
-			tableData.add(tableDataList.get(i));
+        Integer totalRow = 0;
+        chargeInfoDomain.setPageSize(-1);
+        List<TableDataBean> tableDataList = chargeService.chargeDetails(chargeInfoDomain);
+        //假分页
+        List<TableDataBean> tableDatas = new ArrayList<TableDataBean>();
+        List<FeeRecStatisticsBean> FeeRecStatisticsBeans=new ArrayList<FeeRecStatisticsBean>();
+        TableDataBean tableData = new TableDataBean();
+        if (tableDataList !=null && tableDataList.size()>0) {
+        	totalRow = tableDataList.get(0).getTableData().getData().size();
+        	if (pageSize==-1) {
+				return new HttpResultPagination(chargeInfoDomain,tableDataList);
+			}
+        	List<FeeRecStatisticsBean> FeeRecStatisticsBeans1=(List<FeeRecStatisticsBean>) tableDataList.get(0).getTableData().getData();
+        	for (int i = (pageCurrent-1)*pageSize; i < Math.min(totalRow, pageCurrent*pageSize); i++) {
+        		FeeRecStatisticsBeans.add(FeeRecStatisticsBeans1.get(i));
+        	}
+			
 		}
+        chargeInfoDomain.setTotalRow(totalRow);
+        tableData.setTableData(new JRBeanCollectionDataSource(FeeRecStatisticsBeans));
+        tableDatas.add(tableData);
+        return new HttpResultPagination(chargeInfoDomain,tableDatas);
         
-        return new HttpResultPagination(chargeInfoDomain, tableDataList);
+        //        Integer pageCurrent = chargeInfoDomain.getPageCurrent();
+//        Integer pageSize = chargeInfoDomain.getPageSize();
+//        List<TableDataBean> tableDataList = chargeService.chargeDetails(chargeInfoDomain);
+//        chargeInfoDomain.setTotalRow(tableDataList.size());
+//        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+//        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
+//			tableData.add(tableDataList.get(i));
+//		}
+//        
+//        return new HttpResultPagination(chargeInfoDomain, tableDataList);
     }
     
     // 收费情况明细统计预览

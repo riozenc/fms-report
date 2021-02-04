@@ -20,7 +20,10 @@ import org.apache.poi.util.IOUtils;
 import org.bouncycastle.jcajce.provider.symmetric.Serpent.TAlgParams;
 import org.fms.report.common.util.FileUtil;
 import org.fms.report.common.util.MonUtils;
+import org.fms.report.common.webapp.bean.ArrearageBean;
+import org.fms.report.common.webapp.bean.ArrearageSumBean;
 import org.fms.report.common.webapp.bean.TableDataBean;
+import org.fms.report.common.webapp.bean.WriteFilesBean;
 import org.fms.report.common.webapp.domain.ArrearageDomain;
 import org.fms.report.common.webapp.domain.BankCollectionEntity;
 import org.fms.report.common.webapp.returnDomain.SettlementBean;
@@ -39,6 +42,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import com.alibaba.fastjson.JSONObject;
 import com.riozenc.titanTool.common.date.DateUtil;
 import com.riozenc.titanTool.common.json.utils.GsonUtils;
+import com.riozenc.titanTool.common.json.utils.JSONUtil;
 import com.riozenc.titanTool.spring.web.http.HttpResult;
 import com.riozenc.titanTool.spring.web.http.HttpResultPagination;
 
@@ -426,17 +430,40 @@ public class ArrearageController {
         ArrearageDomain arrearageDomain = GsonUtils.readValue(json, ArrearageDomain.class);
         Integer pageCurrent = arrearageDomain.getPageCurrent();
         Integer pageSize = arrearageDomain.getPageSize();
+        Integer totalRow = 0;
         arrearageDomain.setIsSettle(0);
         arrearageDomain.setPageSize(-1);
         List<TableDataBean> tableDataList = arrearageService.summary(arrearageDomain);
         //假分页
-        arrearageDomain.setTotalRow(tableDataList.size());
-        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
-        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
-        	if (tableDataList.get(i).getTableData().getData().size()>0) {
-        		tableData.add(tableDataList.get(i));
+        List<TableDataBean> tableDatas = new ArrayList<TableDataBean>();
+        List<ArrearageSumBean> ArrearageBeans=new ArrayList<ArrearageSumBean>();
+        TableDataBean tableData = new TableDataBean();
+        if (tableDataList !=null && tableDataList.size()>0) {
+        	totalRow = tableDataList.get(0).getTableData().getData().size();
+        	if (pageSize==-1) {
+				return new HttpResultPagination(arrearageDomain,tableDataList);
 			}
+        	List<ArrearageSumBean> writeFilesBeans1=(List<ArrearageSumBean>) tableDataList.get(0).getTableData().getData();
+        	for (int i = (pageCurrent-1)*pageSize; i < Math.min(totalRow, pageCurrent*pageSize); i++) {
+        		ArrearageBeans.add(writeFilesBeans1.get(i));
+        	}
+			
 		}
-        return new HttpResultPagination(arrearageDomain, tableData);
+        arrearageDomain.setTotalRow(totalRow);
+        tableData.setTableData(new JRBeanCollectionDataSource(ArrearageBeans));
+        tableDatas.add(tableData);
+        return new HttpResultPagination(arrearageDomain,tableDatas);
+        
+//        List<TableDataBean> tableDataList = arrearageService.summary(arrearageDomain);
+//        System.err.println("eeeeeee:"+JSONUtil.toJsonString(tableDataList));
+//        //假分页
+//        arrearageDomain.setTotalRow(tableDataList.size());
+//        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+//        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
+//        	if (tableDataList.get(i).getTableData().getData().size()>0) {
+//        		tableData.add(tableDataList.get(i));
+//			}
+//		}
+//        return new HttpResultPagination(arrearageDomain, tableData);
     }
 }

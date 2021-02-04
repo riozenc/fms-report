@@ -12,6 +12,8 @@ import java.util.Map;
 import org.apache.commons.io.FileUtils;
 import org.apache.poi.util.IOUtils;
 import org.fms.report.common.util.FileUtil;
+import org.fms.report.common.webapp.bean.ArrearageSumBean;
+import org.fms.report.common.webapp.bean.MeterMoneyBean;
 import org.fms.report.common.webapp.bean.TableDataBean;
 import org.fms.report.common.webapp.domain.ArrearageDetailDomain;
 import org.fms.report.common.webapp.domain.ElectricityTariffRankEntity;
@@ -53,15 +55,42 @@ public class MeterMoneyController {
             return new HttpResult(HttpResult.ERROR, Global.getConfig("mon")+
                     "之前的月份请在老系统统计");
         }
-        List<TableDataBean> tableDataList = meterMoneyService.select(arrearageDetailDomain);
-        arrearageDetailDomain.setTotalRow(tableDataList.size());
-        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+        //qq
         Integer pageCurrent = arrearageDetailDomain.getPageCurrent();
         Integer pageSize = arrearageDetailDomain.getPageSize();
-        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
-			tableData.add(tableDataList.get(i));
+        Integer totalRow = 0;
+        arrearageDetailDomain.setIsSettle(0);
+        arrearageDetailDomain.setPageSize(-1);
+        List<TableDataBean> tableDataList = meterMoneyService.select(arrearageDetailDomain);
+        List<TableDataBean> tableDatas = new ArrayList<TableDataBean>();
+        List<MeterMoneyBean> MeterMoneyBeans=new ArrayList<MeterMoneyBean>();
+        TableDataBean tableData = new TableDataBean();
+        if (tableDataList !=null && tableDataList.size()>0) {
+        	totalRow = tableDataList.get(0).getTableData().getData().size();
+        	if (pageSize==-1) {
+				return new HttpResultPagination(arrearageDetailDomain,tableDataList);
+			}
+        	List<MeterMoneyBean> MeterMoneyBeans1=(List<MeterMoneyBean>) tableDataList.get(0).getTableData().getData();
+        	for (int i = (pageCurrent-1)*pageSize; i < Math.min(totalRow, pageCurrent*pageSize); i++) {
+        		MeterMoneyBeans.add(MeterMoneyBeans1.get(i));
+        	}
+			
 		}
-        return new  HttpResultPagination(arrearageDetailDomain, tableData);
+        arrearageDetailDomain.setTotalRow(totalRow);
+        tableData.setTableData(new JRBeanCollectionDataSource(MeterMoneyBeans));
+        tableDatas.add(tableData);
+        return new HttpResultPagination(arrearageDetailDomain,tableDatas);
+        //        Integer pageCurrent = arrearageDetailDomain.getPageCurrent();
+//        Integer pageSize = arrearageDetailDomain.getPageSize();
+//       
+//        List<TableDataBean> tableDataList = meterMoneyService.select(arrearageDetailDomain);
+//        arrearageDetailDomain.setTotalRow(tableDataList.size());
+//        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+//       
+//        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
+//			tableData.add(tableDataList.get(i));
+//		}
+//        return new  HttpResultPagination(arrearageDetailDomain, tableData);
     }
     
     @ResponseBody

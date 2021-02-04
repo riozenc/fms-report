@@ -12,6 +12,8 @@ import org.apache.commons.io.FileUtils;
 import org.apache.ibatis.javassist.expr.NewArray;
 import org.apache.poi.util.IOUtils;
 import org.fms.report.common.util.FileUtil;
+import org.fms.report.common.webapp.bean.ArrearageSumBean;
+import org.fms.report.common.webapp.bean.FeeRecStatisticsBean;
 import org.fms.report.common.webapp.bean.TableDataBean;
 import org.fms.report.common.webapp.domain.TransformerDomain;
 import org.fms.report.server.utils.JasperHelper;
@@ -140,14 +142,39 @@ public class TransformerController {
     @RequestMapping(value = "/WriteCharge")
     public Object writeCharge(@RequestBody String json) throws IOException{
         TransformerDomain transformer = GsonUtils.readValue(json, TransformerDomain.class);
-        List<TableDataBean> tableDataList = transformerService.writeCharge(transformer);
-        transformer.setTotalRow(tableDataList.size());
-        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+        //qq
         Integer pageCurrent = transformer.getPageCurrent();
         Integer pageSize = transformer.getPageSize();
-        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
-			tableData.add(tableDataList.get(i));
+        Integer totalRow = 0;
+        transformer.setPageSize(-1);
+        List<TableDataBean> tableDataList = transformerService.writeCharge(transformer);
+        //假分页
+        List<TableDataBean> tableDatas = new ArrayList<TableDataBean>();
+        List<FeeRecStatisticsBean> FeeRecStatisticsBeans=new ArrayList<FeeRecStatisticsBean>();
+        TableDataBean tableData = new TableDataBean();
+        if (tableDataList !=null && tableDataList.size()>0) {
+        	totalRow = tableDataList.get(0).getTableData().getData().size();
+        	if (pageSize==-1) {
+				return new HttpResultPagination(transformer,tableDataList);
+			}
+        	List<FeeRecStatisticsBean> FeeRecStatisticsBeans1=(List<FeeRecStatisticsBean>) tableDataList.get(0).getTableData().getData();
+        	for (int i = (pageCurrent-1)*pageSize; i < Math.min(totalRow, pageCurrent*pageSize); i++) {
+        		FeeRecStatisticsBeans.add(FeeRecStatisticsBeans1.get(i));
+        	}
+			
 		}
-        return new HttpResultPagination(transformer, tableDataList);
+        transformer.setTotalRow(totalRow);
+        tableData.setTableData(new JRBeanCollectionDataSource(FeeRecStatisticsBeans));
+        tableDatas.add(tableData);
+        return new HttpResultPagination(transformer,tableDatas);
+//        Integer pageCurrent = transformer.getPageCurrent();
+//        Integer pageSize = transformer.getPageSize();
+//        List<TableDataBean> tableDataList = transformerService.writeCharge(transformer);
+//        transformer.setTotalRow(tableDataList.size());
+//        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+//        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
+//			tableData.add(tableDataList.get(i));
+//		}
+//        return new HttpResultPagination(transformer, tableDataList);
     }
 }
