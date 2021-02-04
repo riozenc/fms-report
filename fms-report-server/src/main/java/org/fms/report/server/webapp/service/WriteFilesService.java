@@ -480,10 +480,11 @@ public class WriteFilesService {
         		meterMpedRelDomains.stream().collect(Collectors.toMap(o -> o.getMeterId() + "_" + o.getMpedId()+"_"+o.getFunctionCode(), a -> a, (k1, k2) -> k1));
         
         PMpedDomain pMpedParamDomain = new PMpedDomain();
+        pMpedParamDomain.setPageSize(-1);
         pMpedParamDomain.setMpedIds(meterMpedRelDomains.stream().map(MeterMpedRelDomain::getMpedId).collect(Collectors.toList()));
+        
         List<PMpedDomain> pMpedDomains = cimService.findMpedByWhere(pMpedParamDomain);
         Map<Long, PMpedDomain> pmpedMap = pMpedDomains.stream().collect(Collectors.toMap(o -> o.getId(), a -> a, (k1, k2) -> k1));
-        
 //        List<MeterAssetsDomain> meterAssetsDomains=
 //                cimService.getMeterAssetsByAssetsIds(paramMap);
 //        Map<Long,MeterAssetsDomain> meterAssetsDomainMap=meterAssetsDomains.stream()

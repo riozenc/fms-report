@@ -477,15 +477,15 @@ public class WriteFilesController {
         TableDataBean tableData = new TableDataBean();
         if (tableDataList !=null && tableDataList.size()>0) {
         	totalRow = tableDataList.get(0).getTableData().getData().size();
+        	if (pageSize==-1) {
+				return new HttpResultPagination(writeFiles,tableDataList);
+			}
         	List<WriteFilesBean> writeFilesBeans1=(List<WriteFilesBean>) tableDataList.get(0).getTableData().getData();
         	for (int i = (pageCurrent-1)*pageSize; i < Math.min(totalRow, pageCurrent*pageSize); i++) {
-        		System.out.println(i);
         		writeFilesBeans.add(writeFilesBeans1.get(i));
-//        		tableDatas.add(tableDataList.get(i));
         	}
 			
 		}
-        System.out.println("totalRow:"+totalRow);
         writeFiles.setTotalRow(totalRow);
         tableData.setTableData(new JRBeanCollectionDataSource(writeFilesBeans));
         tableDatas.add(tableData);
