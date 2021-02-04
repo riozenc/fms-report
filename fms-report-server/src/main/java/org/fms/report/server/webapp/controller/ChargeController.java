@@ -149,7 +149,7 @@ public class ChargeController {
         Integer pageCurrent = arrearageDmoain.getPageCurrent();
         Integer pageSize = arrearageDmoain.getPageSize();
         List<TableDataBean> tableDataList = chargeService.recRate(arrearageDmoain);
-        
+
         arrearageDmoain.setPageSize(-1);
         Integer totalRow = 0;
         //假分页
@@ -185,14 +185,35 @@ public class ChargeController {
 
         ChargeInfoDomain chargeInfoDomain = JSONObject.parseObject(json, ChargeInfoDomain.class);
         List<TableDataBean> tableDataList = chargeService.feeRecStatistics(chargeInfoDomain);
-        chargeInfoDomain.setTotalRow(tableDataList.size());
-        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+//        chargeInfoDomain.setTotalRow(tableDataList.size());
+//        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
         Integer pageCurrent = chargeInfoDomain.getPageCurrent();
         Integer pageSize = chargeInfoDomain.getPageSize();
-        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
-			tableData.add(tableDataList.get(i));
-		}
-        return  new  HttpResultPagination(chargeInfoDomain,tableData);
+        chargeInfoDomain.setPageSize(-1);
+        Integer totalRow = 0;
+        //假分页
+        List<TableDataBean> tableDatas = new ArrayList<TableDataBean>();
+        List<ChargeInfoDomain> chargeInfoDomains = new ArrayList<ChargeInfoDomain>();
+        TableDataBean tableData = new TableDataBean();
+        if (tableDataList !=null && tableDataList.size()>0) {
+            totalRow = tableDataList.get(0).getTableData().getData().size();
+            if (pageSize==-1) {
+                return new HttpResultPagination(chargeInfoDomain,tableDataList);
+            }
+            List<ChargeInfoDomain> chargeInfoDomain1=(List<ChargeInfoDomain>) tableDataList.get(0).getTableData().getData();
+            for (int i = (pageCurrent-1)*pageSize; i < Math.min(totalRow, pageCurrent*pageSize); i++) {
+                chargeInfoDomains.add(chargeInfoDomain1.get(i));
+            }
+
+        }
+        chargeInfoDomain.setTotalRow(totalRow);
+        tableData.setTableData(new JRBeanCollectionDataSource(chargeInfoDomains));
+        tableDatas.add(tableData);
+
+//        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
+//			tableData.add(tableDataList.get(i));
+//		}
+        return  new  HttpResultPagination(chargeInfoDomain,tableDatas);
     }
 
     // 收费汇总统计预览
