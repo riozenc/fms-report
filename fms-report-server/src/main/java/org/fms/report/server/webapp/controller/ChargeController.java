@@ -149,13 +149,33 @@ public class ChargeController {
         Integer pageCurrent = arrearageDmoain.getPageCurrent();
         Integer pageSize = arrearageDmoain.getPageSize();
         List<TableDataBean> tableDataList = chargeService.recRate(arrearageDmoain);
-        arrearageDmoain.setTotalRow(tableDataList.size());
+        
         arrearageDmoain.setPageSize(-1);
-        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
-        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
-			tableData.add(tableDataList.get(i));
-		}
-        return new HttpResultPagination(arrearageDmoain,tableData);
+        Integer totalRow = 0;
+        //假分页
+        List<TableDataBean> tableDatas = new ArrayList<TableDataBean>();
+        List<ArrearageDomain> arrearageDmoains = new ArrayList<ArrearageDomain>();
+        TableDataBean tableData = new TableDataBean();
+        if (tableDataList !=null && tableDataList.size()>0) {
+            totalRow = tableDataList.get(0).getTableData().getData().size();
+            if (pageSize==-1) {
+                return new HttpResultPagination(arrearageDmoain,tableDataList);
+            }
+            List<ArrearageDomain> arrearageDmoains1=(List<ArrearageDomain>) tableDataList.get(0).getTableData().getData();
+            for (int i = (pageCurrent-1)*pageSize; i < Math.min(totalRow, pageCurrent*pageSize); i++) {
+                arrearageDmoains.add(arrearageDmoains1.get(i));
+            }
+
+        }
+        arrearageDmoain.setTotalRow(totalRow);
+        tableData.setTableData(new JRBeanCollectionDataSource(arrearageDmoains));
+        tableDatas.add(tableData);
+
+//        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
+//        for (int i = (pageCurrent-1)*pageSize; i < Math.min(tableDataList.size(), pageCurrent*pageSize); i++) {
+//			tableData.add(tableDataList.get(i));
+//		}
+        return new HttpResultPagination(arrearageDmoain,tableDatas);
     }
     
     //超级报表-收费汇总统计
