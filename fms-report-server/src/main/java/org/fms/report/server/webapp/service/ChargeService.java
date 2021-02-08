@@ -129,6 +129,7 @@ public class ChargeService {
 
         List<WriteSectMongoDomain> writeSectMongoDomains =
                 billingService.getMongoWriteSect(writeSectMongoDomain);
+        
 
         if (writeSectMongoDomains == null || writeSectMongoDomains.size() < 1) {
             return new ArrayList<>();
@@ -170,6 +171,7 @@ public class ChargeService {
         arrearageDomain.setMeterIds(meterIds);
 
         List<ArrearageDomain> arrearageBeanList = arrearageDAO.findByWhere(arrearageDomain);
+        
 
        /* //收费记录
         ChargeInfoDomain chargeInfoDomain = new ChargeInfoDomain();
@@ -243,6 +245,7 @@ public class ChargeService {
             
             if(key==null) {
             	for (Long code : arrearageDomain.getBusinessPlaceCodes()) {
+            		
             		yshs +=
                             arrearageBeanList.stream().filter(a -> code.equals(a.getBusinessPlaceCode()) && a.getReceivable().compareTo(BigDecimal.ZERO) != 0).map(ArrearageDomain::getSettlementId).distinct().count();
                     //应收金额
@@ -252,7 +255,6 @@ public class ChargeService {
 //                  //欠费金额
                     qfje = qfje.add( arrearageBeanList.stream().filter(a -> code.equals(a.getBusinessPlaceCode())).map(x -> x.getOweMoney() == null ? BigDecimal.ZERO : x.getOweMoney()).reduce(BigDecimal.ZERO, BigDecimal::add));
 				}
-            	
             }else {
             	//应收户数
             	yshs =
@@ -273,7 +275,6 @@ public class ChargeService {
             	
             }
             
-
             sshs = yshs - qfhs;
             ssje = ysje.subtract(qfje);
             RecRateBean recRateBean = new RecRateBean();

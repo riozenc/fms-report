@@ -255,18 +255,21 @@ public class ArrearageService {
         //排序
         beanList =
                 beanList.stream().sorted(Comparator.comparing(ArrearageSumBean::getOrderBy)).collect(Collectors.toList());
-        if (arrearage.getBusinessPlaceCode() != null) {
+//        if (arrearage.getBusinessPlaceCode() != null) {
+        if ("businessPlaceCode".equals(arrearage.getGroupBy())) {
             tableData.setvName("营业区域");
             DeptDomain d = deptService.getDept(arrearage.getBusinessPlaceCode());
             tableData.setvValue(d.getDeptName());
         }
-        if (arrearage.getWritorId() != null) {
+//        if (arrearage.getWritorId() != null) {
+        if ("writor".equals(arrearage.getGroupBy())) {
             tableData.setvName("抄表员");
             if (writorMap.get(arrearage.getWritorId()) != null) {
                 tableData.setvValue(writorMap.get(arrearage.getWritorId()).getUserName());
             }
         }
-        if (arrearage.getWriteSectId() != null) {
+//        if (arrearage.getWriteSectId() != null) {
+        if("writeSect".equals(arrearage.getGroupBy())) {
             tableData.setvName("抄表区段");
             tableData.setvValue(writeSectDomainMap.get(arrearage.getWriteSectId()).getWriteSectName());
         }
