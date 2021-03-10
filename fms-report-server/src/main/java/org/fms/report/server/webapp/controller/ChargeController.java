@@ -16,11 +16,12 @@ import org.apache.poi.util.IOUtils;
 import org.fms.report.common.util.FileUtil;
 import org.fms.report.common.util.FormatterUtil;
 import org.fms.report.common.util.MonUtils;
-import org.fms.report.common.webapp.bean.FeeRecStatisticsBean;
+import org.fms.report.common.webapp.bean.RecRateBean;
 import org.fms.report.common.webapp.bean.TableDataBean;
 import org.fms.report.common.webapp.domain.ArrearageDomain;
 import org.fms.report.common.webapp.domain.ChargeInfoDomain;
 import org.fms.report.common.webapp.domain.NoteInfoDomain;
+import org.fms.report.common.webapp.returnDomain.FeeRecStatisticsBean;
 import org.fms.report.common.webapp.returnDomain.UserInfoEntity;
 import org.fms.report.server.utils.JasperHelper;
 import org.fms.report.server.webapp.service.BillingService;
@@ -155,21 +156,21 @@ public class ChargeController {
         Integer totalRow = 0;
         //假分页
         List<TableDataBean> tableDatas = new ArrayList<TableDataBean>();
-        List<ArrearageDomain> arrearageDmoains = new ArrayList<ArrearageDomain>();
+        List<RecRateBean> recRateBeans = new ArrayList<RecRateBean>();
         TableDataBean tableData = new TableDataBean();
         if (tableDataList !=null && tableDataList.size()>0) {
             totalRow = tableDataList.get(0).getTableData().getData().size();
             if (pageSize==-1) {
                 return new HttpResultPagination(arrearageDmoain,tableDataList);
             }
-            List<ArrearageDomain> arrearageDmoains1=(List<ArrearageDomain>) tableDataList.get(0).getTableData().getData();
+            List<RecRateBean> recRateBeans2=(List<RecRateBean>) tableDataList.get(0).getTableData().getData();
             for (int i = (pageCurrent-1)*pageSize; i < Math.min(totalRow, pageCurrent*pageSize); i++) {
-                arrearageDmoains.add(arrearageDmoains1.get(i));
+            	recRateBeans.add(recRateBeans2.get(i));
             }
 
         }
         arrearageDmoain.setTotalRow(totalRow);
-        tableData.setTableData(new JRBeanCollectionDataSource(arrearageDmoains));
+        tableData.setTableData(new JRBeanCollectionDataSource(recRateBeans));
         tableDatas.add(tableData);
 
 //        List<TableDataBean> tableData = new ArrayList<TableDataBean>();
@@ -194,14 +195,14 @@ public class ChargeController {
         Integer totalRow = 0;
         //假分页
         List<TableDataBean> tableDatas = new ArrayList<TableDataBean>();
-        List<ChargeInfoDomain> chargeInfoDomains = new ArrayList<ChargeInfoDomain>();
+        List<FeeRecStatisticsBean> chargeInfoDomains = new ArrayList<FeeRecStatisticsBean>();
         TableDataBean tableData = new TableDataBean();
         if (tableDataList !=null && tableDataList.size()>0) {
             totalRow = tableDataList.get(0).getTableData().getData().size();
             if (pageSize==-1) {
                 return new HttpResultPagination(chargeInfoDomain,tableDataList);
             }
-            List<ChargeInfoDomain> chargeInfoDomain1=(List<ChargeInfoDomain>) tableDataList.get(0).getTableData().getData();
+            List<FeeRecStatisticsBean> chargeInfoDomain1=(List<FeeRecStatisticsBean>) tableDataList.get(0).getTableData().getData();
             for (int i = (pageCurrent-1)*pageSize; i < Math.min(totalRow, pageCurrent*pageSize); i++) {
                 chargeInfoDomains.add(chargeInfoDomain1.get(i));
             }

@@ -1633,7 +1633,7 @@ public class MeterMoneyService {
                 tableData.setDeskName(transformerEntities.get(0).getDeskName());
             }
 
-            if (lineDomains != null) {
+            if (lineDomains != null && lineDomains.size()>0) {
                 tableData.setLineName(lineDomains.get(0).getLineName());
             }
 
